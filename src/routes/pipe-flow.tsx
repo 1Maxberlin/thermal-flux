@@ -70,7 +70,7 @@ function PipeFlowPage() {
           error: null as string | null,
         };
       }
-      return { fluid: new Fluid(FLUID_LIBRARY[fluidKey] ?? FLUID_LIBRARY.water!), error: null as string | null };
+      return { fluid: new Fluid(FLUID_LIBRARY[fluidKey] ?? FLUID_LIBRARY['water']!), error: null as string | null };
     } catch (e) {
       return { fluid: null, error: (e as Error).message };
     }

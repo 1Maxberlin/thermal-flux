@@ -10,12 +10,18 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as DataDashboardRouteImport } from './routes/data-dashboard'
 import { Route as HeatTransferRouteImport } from './routes/heat-transfer'
 import { Route as PipeFlowRouteImport } from './routes/pipe-flow'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DataDashboardRoute = DataDashboardRouteImport.update({
+  id: '/data-dashboard',
+  path: '/data-dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HeatTransferRoute = HeatTransferRouteImport.update({
@@ -31,30 +37,34 @@ const PipeFlowRoute = PipeFlowRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/data-dashboard': typeof DataDashboardRoute
   '/heat-transfer': typeof HeatTransferRoute
   '/pipe-flow': typeof PipeFlowRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/data-dashboard': typeof DataDashboardRoute
   '/heat-transfer': typeof HeatTransferRoute
   '/pipe-flow': typeof PipeFlowRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/data-dashboard': typeof DataDashboardRoute
   '/heat-transfer': typeof HeatTransferRoute
   '/pipe-flow': typeof PipeFlowRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/heat-transfer' | '/pipe-flow'
+  fullPaths: '/' | '/data-dashboard' | '/heat-transfer' | '/pipe-flow'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/heat-transfer' | '/pipe-flow'
-  id: '__root__' | '/' | '/heat-transfer' | '/pipe-flow'
+  to: '/' | '/data-dashboard' | '/heat-transfer' | '/pipe-flow'
+  id: '__root__' | '/' | '/data-dashboard' | '/heat-transfer' | '/pipe-flow'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  DataDashboardRoute: typeof DataDashboardRoute
   HeatTransferRoute: typeof HeatTransferRoute
   PipeFlowRoute: typeof PipeFlowRoute
 }
@@ -66,6 +76,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/data-dashboard': {
+      id: '/data-dashboard'
+      path: '/data-dashboard'
+      fullPath: '/data-dashboard'
+      preLoaderRoute: typeof DataDashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/heat-transfer': {
@@ -87,6 +104,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  DataDashboardRoute: DataDashboardRoute,
   HeatTransferRoute: HeatTransferRoute,
   PipeFlowRoute: PipeFlowRoute,
 }

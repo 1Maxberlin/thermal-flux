@@ -10,33 +10,53 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as HeatTransferRouteImport } from './routes/heat-transfer'
+import { Route as PipeFlowRouteImport } from './routes/pipe-flow'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const HeatTransferRoute = HeatTransferRouteImport.update({
+  id: '/heat-transfer',
+  path: '/heat-transfer',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PipeFlowRoute = PipeFlowRouteImport.update({
+  id: '/pipe-flow',
+  path: '/pipe-flow',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/heat-transfer': typeof HeatTransferRoute
+  '/pipe-flow': typeof PipeFlowRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/heat-transfer': typeof HeatTransferRoute
+  '/pipe-flow': typeof PipeFlowRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/heat-transfer': typeof HeatTransferRoute
+  '/pipe-flow': typeof PipeFlowRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/heat-transfer' | '/pipe-flow'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/heat-transfer' | '/pipe-flow'
+  id: '__root__' | '/' | '/heat-transfer' | '/pipe-flow'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  HeatTransferRoute: typeof HeatTransferRoute
+  PipeFlowRoute: typeof PipeFlowRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +68,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/heat-transfer': {
+      id: '/heat-transfer'
+      path: '/heat-transfer'
+      fullPath: '/heat-transfer'
+      preLoaderRoute: typeof HeatTransferRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pipe-flow': {
+      id: '/pipe-flow'
+      path: '/pipe-flow'
+      fullPath: '/pipe-flow'
+      preLoaderRoute: typeof PipeFlowRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  HeatTransferRoute: HeatTransferRoute,
+  PipeFlowRoute: PipeFlowRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

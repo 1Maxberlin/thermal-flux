@@ -77,8 +77,8 @@ export function Metric({
 }: {
   label: string;
   value: string;
-  unit?: string;
-  hint?: string;
+  unit?: string | undefined;
+  hint?: string | undefined;
 }) {
   return (
     <div className="metric-card p-4">
@@ -100,7 +100,7 @@ export function Field({
   children,
 }: {
   label: string;
-  hint?: string;
+  hint?: string | undefined;
   children: ReactNode;
 }) {
   return (

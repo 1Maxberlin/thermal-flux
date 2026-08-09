@@ -70,7 +70,7 @@ function PipeFlowPage() {
           error: null as string | null,
         };
       }
-      return { fluid: new Fluid(FLUID_LIBRARY[fluidKey]), error: null as string | null };
+      return { fluid: new Fluid(FLUID_LIBRARY[fluidKey] ?? FLUID_LIBRARY.water!), error: null as string | null };
     } catch (e) {
       return { fluid: null, error: (e as Error).message };
     }
@@ -190,13 +190,13 @@ function PipeFlowPage() {
               <div className="flex justify-between py-0.5">
                 <span>Density ρ</span>
                 <span className="font-mono text-foreground">
-                  {fmt(FLUID_LIBRARY[fluidKey].density, 2)} kg/m³
+                  {fmt(fluidResult.fluid?.density ?? 0, 2)} kg/m³
                 </span>
               </div>
               <div className="flex justify-between py-0.5">
                 <span>Viscosity μ</span>
                 <span className="font-mono text-foreground">
-                  {FLUID_LIBRARY[fluidKey].viscosity.toExponential(3)} Pa·s
+                  {(fluidResult.fluid?.viscosity ?? 0).toExponential(3)} Pa·s
                 </span>
               </div>
             </div>

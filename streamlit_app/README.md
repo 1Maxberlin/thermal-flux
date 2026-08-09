@@ -39,8 +39,8 @@ Deploy by pointing Streamlit Community Cloud at this repository with
 ## Verification
 
 Each correlation was checked by hand before release — for example, water at 20 L/s in a
-100 mm commercial-steel line over 250 m gives v = 2.546 m/s, Re = 2.54×10⁵, f = 0.0184 and
-ΔP ≈ 149 kPa, which the app reproduces to within 0.3 %. The full set of worked examples is
+100 mm commercial-steel line over 250 m gives v = 2.546 m/s, Re = 2.54×10⁵, f = 0.0182 and
+ΔP ≈ 147 kPa, which the app reproduces exactly. The full set of worked examples is
 on the app's Documentation page.
 
 ## AI usage

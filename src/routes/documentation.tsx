@@ -32,8 +32,8 @@ const VERIFICATION = [
   {
     title: "A2 · Turbulent water in commercial steel",
     given: "Water ρ = 998.2 kg/m³, μ = 1.002×10⁻³ Pa·s, D = 100 mm, ε = 0.045 mm, L = 250 m, Q = 20 L/s",
-    hand: "v = 0.02/0.0078540 = 2.546 m/s; Re = 998.2·2.546·0.1/0.001002 = 2.537×10⁵; ε/D = 4.5×10⁻⁴; Colebrook → f = 0.0184; ΔP = 0.0184·(250/0.1)·(998.2·2.546²/2) = 1.49×10⁵ Pa ≈ 149 kPa.",
-    check: "App returns f = 0.0184 and ΔP = 149 kPa (±0.3 %), i.e. 15.2 m of head loss. Matches Moody-chart reading.",
+    hand: "v = 0.02/0.0078540 = 2.546 m/s; Re = 998.2·2.546·0.1/0.001002 = 2.537×10⁵; ε/D = 4.5×10⁻⁴; Colebrook → f = 0.0182; ΔP = 0.0182·(250/0.1)·(998.2·2.546²/2) = 1.47×10⁵ Pa ≈ 147 kPa.",
+    check: "App returns f = 0.0182, ΔP = 146.97 kPa and h_f = 15.01 m — within 1 % of a Moody-chart reading of f ≈ 0.018.",
   },
   {
     title: "B1 · Conduction through a steel wall",

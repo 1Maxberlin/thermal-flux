@@ -394,7 +394,7 @@ function DashboardPage() {
               </p>
             </aside>
 
-            <div className="space-y-6">
+            <div className="min-w-0 space-y-6">
               <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 <Metric label="Rows after filter" value={String(filtered.length)} hint={`of ${rows.length} total`} />
                 <Metric

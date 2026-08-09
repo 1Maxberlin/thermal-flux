@@ -10,33 +10,81 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as DataDashboardRouteImport } from './routes/data-dashboard'
+import { Route as DocumentationRouteImport } from './routes/documentation'
+import { Route as HeatTransferRouteImport } from './routes/heat-transfer'
+import { Route as PipeFlowRouteImport } from './routes/pipe-flow'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DataDashboardRoute = DataDashboardRouteImport.update({
+  id: '/data-dashboard',
+  path: '/data-dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DocumentationRoute = DocumentationRouteImport.update({
+  id: '/documentation',
+  path: '/documentation',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HeatTransferRoute = HeatTransferRouteImport.update({
+  id: '/heat-transfer',
+  path: '/heat-transfer',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PipeFlowRoute = PipeFlowRouteImport.update({
+  id: '/pipe-flow',
+  path: '/pipe-flow',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/data-dashboard': typeof DataDashboardRoute
+  '/documentation': typeof DocumentationRoute
+  '/heat-transfer': typeof HeatTransferRoute
+  '/pipe-flow': typeof PipeFlowRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/data-dashboard': typeof DataDashboardRoute
+  '/documentation': typeof DocumentationRoute
+  '/heat-transfer': typeof HeatTransferRoute
+  '/pipe-flow': typeof PipeFlowRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/data-dashboard': typeof DataDashboardRoute
+  '/documentation': typeof DocumentationRoute
+  '/heat-transfer': typeof HeatTransferRoute
+  '/pipe-flow': typeof PipeFlowRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    '/' | '/data-dashboard' | '/documentation' | '/heat-transfer' | '/pipe-flow'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    '/' | '/data-dashboard' | '/documentation' | '/heat-transfer' | '/pipe-flow'
+  id:
+    | '__root__'
+    | '/'
+    | '/data-dashboard'
+    | '/documentation'
+    | '/heat-transfer'
+    | '/pipe-flow'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  DataDashboardRoute: typeof DataDashboardRoute
+  DocumentationRoute: typeof DocumentationRoute
+  HeatTransferRoute: typeof HeatTransferRoute
+  PipeFlowRoute: typeof PipeFlowRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,22 +96,44 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/data-dashboard': {
+      id: '/data-dashboard'
+      path: '/data-dashboard'
+      fullPath: '/data-dashboard'
+      preLoaderRoute: typeof DataDashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/documentation': {
+      id: '/documentation'
+      path: '/documentation'
+      fullPath: '/documentation'
+      preLoaderRoute: typeof DocumentationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/heat-transfer': {
+      id: '/heat-transfer'
+      path: '/heat-transfer'
+      fullPath: '/heat-transfer'
+      preLoaderRoute: typeof HeatTransferRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pipe-flow': {
+      id: '/pipe-flow'
+      path: '/pipe-flow'
+      fullPath: '/pipe-flow'
+      preLoaderRoute: typeof PipeFlowRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  DataDashboardRoute: DataDashboardRoute,
+  DocumentationRoute: DocumentationRoute,
+  HeatTransferRoute: HeatTransferRoute,
+  PipeFlowRoute: PipeFlowRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

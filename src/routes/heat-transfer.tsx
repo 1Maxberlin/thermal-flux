@@ -171,21 +171,30 @@ function HeatTransferPage() {
   return (
     <AppShell>
       <PageHeader
-        eyebrow="Module B"
+        eyebrow="Thermal analysis"
         title="Heat Transfer Calculator"
-        description="Two classical results, side by side: steady one-dimensional conduction through a flat wall (Fourier's law) and transient lumped-capacitance cooling of a body in a constant ambient (Newton's law of cooling). Every input is described physically, with its unit."
+        description="Two classical results, side by side: steady one-dimensional conduction through a flat wall, and transient lumped-capacitance cooling of a body in a constant ambient. Every input is described physically, with its unit."
       />
 
       {/* Conduction */}
-      <section className="panel p-6">
-        <h2 className="font-display text-xl font-bold">
-          1 · Steady-state conduction through a flat wall
+      <section className="panel p-5 sm:p-6">
+        <h2 className="font-display text-xl font-extrabold sm:text-2xl">
+          Steady-state conduction through a flat wall
         </h2>
-        <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
-          Fourier's law for a single homogeneous layer:{" "}
-          <span className="font-mono text-foreground">q = k·A·(T_hot − T_cold) / L</span>. Use it to
-          size insulation or estimate heat loss through a vessel wall.
-        </p>
+        <div className="mt-3 grid gap-4 lg:grid-cols-[1fr_1fr]">
+          <Equation
+            tex="q=\dfrac{k\,A\,(T_{h}-T_{c})}{L},\qquad R_{th}=\dfrac{L}{kA}"
+            caption="Fourier's law for one homogeneous layer"
+          />
+          <FieldNote>
+            This is the calculation behind insulating a separator, a stock tank or a steam line. Heat
+            lost through the wall cools the crude, and cool crude drops wax and asphaltene onto the
+            pipe wall and thickens up so the pumps work harder. Trading a thicker jacket (larger{" "}
+            <M tex="L" />) or a lower-conductivity material (smaller <M tex="k" />) against its cost
+            is the everyday insulation-sizing decision.
+          </FieldNote>
+        </div>
+
 
         <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_1fr]">
           <div className="space-y-4">

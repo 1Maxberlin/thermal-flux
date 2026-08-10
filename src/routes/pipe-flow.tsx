@@ -301,17 +301,18 @@ function PipeFlowPage() {
           {r ? (
             <>
               <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                <Metric label="Velocity" value={fmt(r.velocity, 3)} unit="m/s" hint="v = Q / A" />
+                <Metric label="Velocity" value={fmt(r.velocity, 3)} unit="m/s" hint="v = Q ÷ A" />
                 <Metric
                   label="Reynolds number"
                   value={fmt(r.reynolds, 0)}
-                  hint={`${r.regime} · Re = ρvD/μ`}
+                  hint={`${r.regime} · Re = ρvD ÷ μ`}
                 />
                 <Metric
                   label="Friction factor"
                   value={fmt(r.frictionFactor, 4)}
-                  hint={r.reynolds < 2300 ? "f = 64/Re" : "Colebrook–White"}
+                  hint={r.reynolds < 2300 ? "Laminar: f = 64 ÷ Re" : "Colebrook–White solution"}
                 />
+
                 <Metric
                   label="Pressure drop"
                   value={fmt(r.pressureDrop / 1000, 3)}
@@ -414,7 +415,7 @@ function PipeFlowPage() {
                       ["Cross-sectional area, A", `${fmt(r.area * 1e4, 3)} cm²`],
                       ["Relative roughness, ε/D", fmt(r.relativeRoughness, 6)],
                       ["Mass flow rate", `${fmt((fluidResult.fluid?.density ?? 0) * analysis.q, 3)} kg/s`],
-                      ["Head loss, h_f", `${fmt(r.headLoss, 4)} m of fluid`],
+                      ["Head loss, hf", `${fmt(r.headLoss, 4)} m of fluid`],
                       ["Pressure gradient", `${fmt(r.pressureDrop / numberOr(lengthM, 1) / 1000, 4)} kPa/m`],
                       ["Flow regime", r.regime],
                     ].map(([k, v]) => (

@@ -320,6 +320,24 @@ function PipeFlowPage() {
                 />
               </div>
 
+              <div className="grid gap-4 md:grid-cols-2">
+                <FieldNote title="Reading the Reynolds number">
+                  Below <M tex="Re \approx 2300" /> the flow is laminar — typical of heavy or waxy
+                  crude in a small flowline, where pressure drop rises only linearly with rate. Above{" "}
+                  <M tex="Re \approx 4000" /> it is turbulent, the usual state for produced water,
+                  gas and light oil, and <M tex="\Delta P" /> then climbs almost with the square of
+                  rate. This run is {r.regime.toLowerCase()}.
+                </FieldNote>
+                <FieldNote title="Why the pressure drop matters">
+                  {`${fmt(r.pressureDrop / 1000, 2)} kPa`} of friction is head your pump or the
+                  reservoir must supply. Convert it to hydraulic power with{" "}
+                  <M tex="P = Q\,\Delta P" /> to size the driver, and compare the head loss against
+                  available wellhead pressure to see whether the line can flow naturally or needs
+                  artificial lift.
+                </FieldNote>
+              </div>
+
+
               <div className="panel p-5">
                 <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
                   <h2 className="font-display text-lg font-bold">Pressure drop vs flow rate</h2>

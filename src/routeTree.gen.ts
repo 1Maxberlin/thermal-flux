@@ -11,9 +11,11 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DataDashboardRouteImport } from './routes/data-dashboard'
-import { Route as DocumentationRouteImport } from './routes/documentation'
 import { Route as HeatTransferRouteImport } from './routes/heat-transfer'
+import { Route as ManualRouteImport } from './routes/manual'
 import { Route as PipeFlowRouteImport } from './routes/pipe-flow'
+import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as TermsRouteImport } from './routes/terms'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -25,14 +27,14 @@ const DataDashboardRoute = DataDashboardRouteImport.update({
   path: '/data-dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DocumentationRoute = DocumentationRouteImport.update({
-  id: '/documentation',
-  path: '/documentation',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const HeatTransferRoute = HeatTransferRouteImport.update({
   id: '/heat-transfer',
   path: '/heat-transfer',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ManualRoute = ManualRouteImport.update({
+  id: '/manual',
+  path: '/manual',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PipeFlowRoute = PipeFlowRouteImport.update({
@@ -40,51 +42,83 @@ const PipeFlowRoute = PipeFlowRouteImport.update({
   path: '/pipe-flow',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/data-dashboard': typeof DataDashboardRoute
-  '/documentation': typeof DocumentationRoute
   '/heat-transfer': typeof HeatTransferRoute
+  '/manual': typeof ManualRoute
   '/pipe-flow': typeof PipeFlowRoute
+  '/privacy': typeof PrivacyRoute
+  '/terms': typeof TermsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/data-dashboard': typeof DataDashboardRoute
-  '/documentation': typeof DocumentationRoute
   '/heat-transfer': typeof HeatTransferRoute
+  '/manual': typeof ManualRoute
   '/pipe-flow': typeof PipeFlowRoute
+  '/privacy': typeof PrivacyRoute
+  '/terms': typeof TermsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/data-dashboard': typeof DataDashboardRoute
-  '/documentation': typeof DocumentationRoute
   '/heat-transfer': typeof HeatTransferRoute
+  '/manual': typeof ManualRoute
   '/pipe-flow': typeof PipeFlowRoute
+  '/privacy': typeof PrivacyRoute
+  '/terms': typeof TermsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/data-dashboard' | '/documentation' | '/heat-transfer' | '/pipe-flow'
+    | '/'
+    | '/data-dashboard'
+    | '/heat-transfer'
+    | '/manual'
+    | '/pipe-flow'
+    | '/privacy'
+    | '/terms'
   fileRoutesByTo: FileRoutesByTo
   to:
-    '/' | '/data-dashboard' | '/documentation' | '/heat-transfer' | '/pipe-flow'
+    | '/'
+    | '/data-dashboard'
+    | '/heat-transfer'
+    | '/manual'
+    | '/pipe-flow'
+    | '/privacy'
+    | '/terms'
   id:
     | '__root__'
     | '/'
     | '/data-dashboard'
-    | '/documentation'
     | '/heat-transfer'
+    | '/manual'
     | '/pipe-flow'
+    | '/privacy'
+    | '/terms'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DataDashboardRoute: typeof DataDashboardRoute
-  DocumentationRoute: typeof DocumentationRoute
   HeatTransferRoute: typeof HeatTransferRoute
+  ManualRoute: typeof ManualRoute
   PipeFlowRoute: typeof PipeFlowRoute
+  PrivacyRoute: typeof PrivacyRoute
+  TermsRoute: typeof TermsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -103,18 +137,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DataDashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/documentation': {
-      id: '/documentation'
-      path: '/documentation'
-      fullPath: '/documentation'
-      preLoaderRoute: typeof DocumentationRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/heat-transfer': {
       id: '/heat-transfer'
       path: '/heat-transfer'
       fullPath: '/heat-transfer'
       preLoaderRoute: typeof HeatTransferRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/manual': {
+      id: '/manual'
+      path: '/manual'
+      fullPath: '/manual'
+      preLoaderRoute: typeof ManualRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/pipe-flow': {
@@ -124,26 +158,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PipeFlowRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DataDashboardRoute: DataDashboardRoute,
-  DocumentationRoute: DocumentationRoute,
   HeatTransferRoute: HeatTransferRoute,
+  ManualRoute: ManualRoute,
   PipeFlowRoute: PipeFlowRoute,
+  PrivacyRoute: PrivacyRoute,
+  TermsRoute: TermsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

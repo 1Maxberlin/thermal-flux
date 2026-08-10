@@ -12,6 +12,8 @@ import {
 } from "recharts";
 import { Download, AlertTriangle } from "lucide-react";
 import { AppShell, Field, Metric, PageHeader } from "@/components/AppShell";
+import { Equation, FieldNote, M } from "@/components/Math";
+
 import { FLUID_LIBRARY, Fluid, Pipe, downloadFile, fmt, toCsv } from "@/lib/engineering";
 import { toast } from "sonner";
 
@@ -138,17 +140,33 @@ function PipeFlowPage() {
   return (
     <AppShell>
       <PageHeader
-        eyebrow="Module A"
+        eyebrow="Hydraulics"
         title="Pipe Flow Analyser"
-        description="Single-phase incompressible hydraulics for a straight circular pipe. Friction factor uses f = 64/Re in laminar flow and the Colebrook–White equation (solved iteratively) in turbulent flow; pressure drop follows Darcy–Weisbach, ΔP = f (L/D)(ρv²/2)."
+        description="Single-phase incompressible hydraulics for a straight circular pipe. Friction is laminar below Re = 2300 and follows the Colebrook–White equation in turbulent flow; pressure drop follows Darcy–Weisbach."
       />
+
+      <div className="panel mb-6 p-5 sm:p-6">
+        <div className="grid gap-4 lg:grid-cols-3">
+          <Equation tex="v=\dfrac{Q}{A}=\dfrac{4Q}{\pi D^{2}}" caption="Bulk velocity" />
+          <Equation tex="Re=\dfrac{\rho v D}{\mu}" caption="Reynolds number" />
+          <Equation tex="\Delta P=f\,\dfrac{L}{D}\,\dfrac{\rho v^{2}}{2}" caption="Darcy–Weisbach" />
+        </div>
+        <FieldNote>
+          Line sizing is a money decision. A larger bore cuts <M tex="\Delta P" /> roughly as{" "}
+          <M tex="D^{-5}" />, so a small diameter increase slashes pumping horsepower and fuel cost —
+          but adds steel, coating and installation cost. Flowlines are usually sized to keep velocity
+          in the 1–3 m/s window: fast enough to lift solids and stop wax or water dropping out, slow
+          enough to avoid erosion–corrosion (the API RP 14E erosional velocity limit).
+        </FieldNote>
+      </div>
 
       <div className="grid gap-6 lg:grid-cols-[340px_1fr]">
         {/* Sidebar inputs */}
         <aside className="panel h-fit space-y-5 p-5 lg:sticky lg:top-24">
-          <h2 className="font-display text-sm font-bold uppercase tracking-widest text-primary">
+          <h2 className="font-display text-sm font-extrabold uppercase tracking-widest text-primary">
             Inputs
           </h2>
+
 
           <Field label="Fluid" hint="Library properties are given at ~20 °C and 1 atm.">
             <select
@@ -283,17 +301,18 @@ function PipeFlowPage() {
           {r ? (
             <>
               <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                <Metric label="Velocity" value={fmt(r.velocity, 3)} unit="m/s" hint="v = Q / A" />
+                <Metric label="Velocity" value={fmt(r.velocity, 3)} unit="m/s" hint="v = Q ÷ A" />
                 <Metric
                   label="Reynolds number"
                   value={fmt(r.reynolds, 0)}
-                  hint={`${r.regime} · Re = ρvD/μ`}
+                  hint={`${r.regime} · Re = ρvD ÷ μ`}
                 />
                 <Metric
                   label="Friction factor"
                   value={fmt(r.frictionFactor, 4)}
-                  hint={r.reynolds < 2300 ? "f = 64/Re" : "Colebrook–White"}
+                  hint={r.reynolds < 2300 ? "Laminar: f = 64 ÷ Re" : "Colebrook–White solution"}
                 />
+
                 <Metric
                   label="Pressure drop"
                   value={fmt(r.pressureDrop / 1000, 3)}
@@ -301,6 +320,24 @@ function PipeFlowPage() {
                   hint={`${fmt(r.headLoss, 3)} m head loss`}
                 />
               </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <FieldNote title="Reading the Reynolds number">
+                  Below <M tex="Re \approx 2300" /> the flow is laminar — typical of heavy or waxy
+                  crude in a small flowline, where pressure drop rises only linearly with rate. Above{" "}
+                  <M tex="Re \approx 4000" /> it is turbulent, the usual state for produced water,
+                  gas and light oil, and <M tex="\Delta P" /> then climbs almost with the square of
+                  rate. This run is {r.regime.toLowerCase()}.
+                </FieldNote>
+                <FieldNote title="Why the pressure drop matters">
+                  {`${fmt(r.pressureDrop / 1000, 2)} kPa`} of friction is head your pump or the
+                  reservoir must supply. Convert it to hydraulic power with{" "}
+                  <M tex="P = Q\,\Delta P" /> to size the driver, and compare the head loss against
+                  available wellhead pressure to see whether the line can flow naturally or needs
+                  artificial lift.
+                </FieldNote>
+              </div>
+
 
               <div className="panel p-5">
                 <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
@@ -378,7 +415,7 @@ function PipeFlowPage() {
                       ["Cross-sectional area, A", `${fmt(r.area * 1e4, 3)} cm²`],
                       ["Relative roughness, ε/D", fmt(r.relativeRoughness, 6)],
                       ["Mass flow rate", `${fmt((fluidResult.fluid?.density ?? 0) * analysis.q, 3)} kg/s`],
-                      ["Head loss, h_f", `${fmt(r.headLoss, 4)} m of fluid`],
+                      ["Head loss, hf", `${fmt(r.headLoss, 4)} m of fluid`],
                       ["Pressure gradient", `${fmt(r.pressureDrop / numberOr(lengthM, 1) / 1000, 4)} kPa/m`],
                       ["Flow regime", r.regime],
                     ].map(([k, v]) => (

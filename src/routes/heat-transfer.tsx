@@ -12,6 +12,8 @@ import {
 } from "recharts";
 import { AlertTriangle, Download } from "lucide-react";
 import { AppShell, Field, Metric, PageHeader } from "@/components/AppShell";
+import { Equation, FieldNote, M } from "@/components/Math";
+
 import { conductionThroughWall, downloadFile, fmt, newtonCooling, toCsv } from "@/lib/engineering";
 import { toast } from "sonner";
 
@@ -169,21 +171,30 @@ function HeatTransferPage() {
   return (
     <AppShell>
       <PageHeader
-        eyebrow="Module B"
+        eyebrow="Thermal analysis"
         title="Heat Transfer Calculator"
-        description="Two classical results, side by side: steady one-dimensional conduction through a flat wall (Fourier's law) and transient lumped-capacitance cooling of a body in a constant ambient (Newton's law of cooling). Every input is described physically, with its unit."
+        description="Two classical results, side by side: steady one-dimensional conduction through a flat wall, and transient lumped-capacitance cooling of a body in a constant ambient. Every input is described physically, with its unit."
       />
 
       {/* Conduction */}
-      <section className="panel p-6">
-        <h2 className="font-display text-xl font-bold">
-          1 · Steady-state conduction through a flat wall
+      <section className="panel p-5 sm:p-6">
+        <h2 className="font-display text-xl font-extrabold sm:text-2xl">
+          Steady-state conduction through a flat wall
         </h2>
-        <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
-          Fourier's law for a single homogeneous layer:{" "}
-          <span className="font-mono text-foreground">q = k·A·(T_hot − T_cold) / L</span>. Use it to
-          size insulation or estimate heat loss through a vessel wall.
-        </p>
+        <div className="mt-3 grid gap-4 lg:grid-cols-[1fr_1fr]">
+          <Equation
+            tex="q=\dfrac{k\,A\,(T_{h}-T_{c})}{L},\qquad R_{th}=\dfrac{L}{kA}"
+            caption="Fourier's law for one homogeneous layer"
+          />
+          <FieldNote>
+            This is the calculation behind insulating a separator, a stock tank or a steam line. Heat
+            lost through the wall cools the crude, and cool crude drops wax and asphaltene onto the
+            pipe wall and thickens up so the pumps work harder. Trading a thicker jacket (larger{" "}
+            <M tex="L" />) or a lower-conductivity material (smaller <M tex="k" />) against its cost
+            is the everyday insulation-sizing decision.
+          </FieldNote>
+        </div>
+
 
         <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_1fr]">
           <div className="space-y-4">
@@ -278,13 +289,13 @@ function HeatTransferPage() {
                     label="Thermal resistance"
                     value={fmt(c.resistance, 5)}
                     unit="K/W"
-                    hint="R = L / (k·A)"
+                    hint="R = L ÷ (k·A)"
                   />
                   <Metric label="Driving ΔT" value={fmt(c.deltaT, 2)} unit="K" />
                 </div>
-                <div className="rounded-lg border border-border bg-background/40 p-4 text-xs leading-relaxed text-muted-foreground">
+                <div className="rounded-xl border border-border bg-background/40 p-4 text-[0.95rem] leading-relaxed text-muted-foreground">
                   <strong className="text-foreground">Reading the result:</strong> heat flows from
-                  hot to cold. A negative q simply means the "cold" side is actually hotter. Halving
+                  hot to cold. A negative q simply means the “cold” side is actually hotter. Halving
                   the thickness doubles the loss; swapping steel for foam insulation of the same
                   thickness cuts it by roughly three orders of magnitude.
                 </div>
@@ -295,17 +306,24 @@ function HeatTransferPage() {
       </section>
 
       {/* Cooling */}
-      <section className="panel mt-6 p-6">
-        <h2 className="font-display text-xl font-bold">
-          2 · Newton's law of cooling — time to reach a target temperature
+      <section className="panel mt-6 p-5 sm:p-6">
+        <h2 className="font-display text-xl font-extrabold sm:text-2xl">
+          Newton cooling — time to reach a target temperature
         </h2>
-        <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
-          Lumped-capacitance model:{" "}
-          <span className="font-mono text-foreground">
-            T(t) = T∞ + (T₀ − T∞)·e^(−t/τ), τ = ρVc_p /(hA)
-          </span>
-          . The curve below updates live as you move any slider.
-        </p>
+        <div className="mt-3 grid gap-4 lg:grid-cols-[1fr_1fr]">
+          <Equation
+            tex="T(t)=T_{\infty}+(T_{0}-T_{\infty})\,e^{-t/\tau},\qquad \tau=\dfrac{\rho V c_{p}}{hA}"
+            caption="Lumped-capacitance cooling — the curve updates as you drag any slider"
+          />
+          <FieldNote>
+            Shut-in cool-down is a real operating risk. Once a stagnant flowline drops below the wax
+            appearance or hydrate formation temperature, you are looking at a plug and a costly
+            remediation job. The time constant <M tex="\tau" /> tells you how long the no-touch
+            window is; increasing insulation (lowering <M tex="h" />) or thermal mass{" "}
+            <M tex="\rho V c_p" /> stretches it.
+          </FieldNote>
+        </div>
+
 
         <div className="mt-6 grid gap-6 lg:grid-cols-[380px_1fr]">
           <div className="space-y-4">
@@ -330,7 +348,7 @@ function HeatTransferPage() {
               step={1}
             />
             <Slider
-              label="Target temperature, T_target"
+              label="Target temperature"
               hint="The temperature you want to reach — must lie between T₀ and T∞."
               unit="°C"
               value={tTarget}
@@ -405,7 +423,7 @@ function HeatTransferPage() {
               <>
                 <div className="grid gap-4 sm:grid-cols-3">
                   <Metric
-                    label="Time constant, τ"
+                    label="Thermal time constant"
                     value={fmt(cool.tau / 60, 2)}
                     unit="min"
                     hint={`${fmt(cool.tau, 0)} s — 63 % of the change`}

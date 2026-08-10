@@ -289,13 +289,13 @@ function HeatTransferPage() {
                     label="Thermal resistance"
                     value={fmt(c.resistance, 5)}
                     unit="K/W"
-                    hint="R = L / (k·A)"
+                    hint="R = L ÷ (k·A)"
                   />
                   <Metric label="Driving ΔT" value={fmt(c.deltaT, 2)} unit="K" />
                 </div>
-                <div className="rounded-lg border border-border bg-background/40 p-4 text-xs leading-relaxed text-muted-foreground">
+                <div className="rounded-xl border border-border bg-background/40 p-4 text-[0.95rem] leading-relaxed text-muted-foreground">
                   <strong className="text-foreground">Reading the result:</strong> heat flows from
-                  hot to cold. A negative q simply means the "cold" side is actually hotter. Halving
+                  hot to cold. A negative q simply means the “cold” side is actually hotter. Halving
                   the thickness doubles the loss; swapping steel for foam insulation of the same
                   thickness cuts it by roughly three orders of magnitude.
                 </div>
@@ -306,17 +306,24 @@ function HeatTransferPage() {
       </section>
 
       {/* Cooling */}
-      <section className="panel mt-6 p-6">
-        <h2 className="font-display text-xl font-bold">
-          2 · Newton's law of cooling — time to reach a target temperature
+      <section className="panel mt-6 p-5 sm:p-6">
+        <h2 className="font-display text-xl font-extrabold sm:text-2xl">
+          Newton cooling — time to reach a target temperature
         </h2>
-        <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
-          Lumped-capacitance model:{" "}
-          <span className="font-mono text-foreground">
-            T(t) = T∞ + (T₀ − T∞)·e^(−t/τ), τ = ρVc_p /(hA)
-          </span>
-          . The curve below updates live as you move any slider.
-        </p>
+        <div className="mt-3 grid gap-4 lg:grid-cols-[1fr_1fr]">
+          <Equation
+            tex="T(t)=T_{\infty}+(T_{0}-T_{\infty})\,e^{-t/\tau},\qquad \tau=\dfrac{\rho V c_{p}}{hA}"
+            caption="Lumped-capacitance cooling — the curve updates as you drag any slider"
+          />
+          <FieldNote>
+            Shut-in cool-down is a real operating risk. Once a stagnant flowline drops below the wax
+            appearance or hydrate formation temperature, you are looking at a plug and a costly
+            remediation job. The time constant <M tex="\tau" /> tells you how long the no-touch
+            window is; increasing insulation (lowering <M tex="h" />) or thermal mass{" "}
+            <M tex="\rho V c_p" /> stretches it.
+          </FieldNote>
+        </div>
+
 
         <div className="mt-6 grid gap-6 lg:grid-cols-[380px_1fr]">
           <div className="space-y-4">

@@ -348,7 +348,7 @@ function HeatTransferPage() {
               step={1}
             />
             <Slider
-              label="Target temperature, T_target"
+              label="Target temperature"
               hint="The temperature you want to reach — must lie between T₀ and T∞."
               unit="°C"
               value={tTarget}
@@ -423,7 +423,7 @@ function HeatTransferPage() {
               <>
                 <div className="grid gap-4 sm:grid-cols-3">
                   <Metric
-                    label="Time constant, τ"
+                    label="Thermal time constant"
                     value={fmt(cool.tau / 60, 2)}
                     unit="min"
                     hint={`${fmt(cool.tau, 0)} s — 63 % of the change`}

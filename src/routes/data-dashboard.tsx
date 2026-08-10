@@ -14,6 +14,8 @@ import {
 } from "recharts";
 import { AlertTriangle, Download, FileUp, Sparkles } from "lucide-react";
 import { AppShell, Field, Metric, PageHeader } from "@/components/AppShell";
+import { Equation, FieldNote, M } from "@/components/Math";
+
 import { downloadFile, fmt, toCsv } from "@/lib/engineering";
 import { toast } from "sonner";
 

@@ -138,17 +138,33 @@ function PipeFlowPage() {
   return (
     <AppShell>
       <PageHeader
-        eyebrow="Module A"
+        eyebrow="Hydraulics"
         title="Pipe Flow Analyser"
-        description="Single-phase incompressible hydraulics for a straight circular pipe. Friction factor uses f = 64/Re in laminar flow and the Colebrook–White equation (solved iteratively) in turbulent flow; pressure drop follows Darcy–Weisbach, ΔP = f (L/D)(ρv²/2)."
+        description="Single-phase incompressible hydraulics for a straight circular pipe. Friction is laminar below Re = 2300 and follows the Colebrook–White equation in turbulent flow; pressure drop follows Darcy–Weisbach."
       />
+
+      <div className="panel mb-6 p-5 sm:p-6">
+        <div className="grid gap-4 lg:grid-cols-3">
+          <Equation tex="v=\dfrac{Q}{A}=\dfrac{4Q}{\pi D^{2}}" caption="Bulk velocity" />
+          <Equation tex="Re=\dfrac{\rho v D}{\mu}" caption="Reynolds number" />
+          <Equation tex="\Delta P=f\,\dfrac{L}{D}\,\dfrac{\rho v^{2}}{2}" caption="Darcy–Weisbach" />
+        </div>
+        <FieldNote>
+          Line sizing is a money decision. A larger bore cuts <M tex="\Delta P" /> roughly as{" "}
+          <M tex="D^{-5}" />, so a small diameter increase slashes pumping horsepower and fuel cost —
+          but adds steel, coating and installation cost. Flowlines are usually sized to keep velocity
+          in the 1–3 m/s window: fast enough to lift solids and stop wax or water dropping out, slow
+          enough to avoid erosion–corrosion (the API RP 14E erosional velocity limit).
+        </FieldNote>
+      </div>
 
       <div className="grid gap-6 lg:grid-cols-[340px_1fr]">
         {/* Sidebar inputs */}
         <aside className="panel h-fit space-y-5 p-5 lg:sticky lg:top-24">
-          <h2 className="font-display text-sm font-bold uppercase tracking-widest text-primary">
+          <h2 className="font-display text-sm font-extrabold uppercase tracking-widest text-primary">
             Inputs
           </h2>
+
 
           <Field label="Fluid" hint="Library properties are given at ~20 °C and 1 atm.">
             <select

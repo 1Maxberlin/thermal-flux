@@ -262,12 +262,27 @@ function DashboardPage() {
   return (
     <AppShell>
       <PageHeader
-        eyebrow="Module C"
+        eyebrow="Reservoir data"
         title="Rock & Fluid Data Dashboard"
         description="Upload a core-analysis or fluid-property CSV and explore it: summary statistics per numeric column, cut-off filtering, a porosity histogram, a porosity–permeability crossplot on a log scale, and a download of exactly the rows you filtered."
       />
 
-      <div className="panel p-6">
+      <div className="panel mb-6 p-5 sm:p-6">
+        <div className="grid gap-4 lg:grid-cols-[1fr_1fr]">
+          <Equation
+            tex="k \;\propto\; \dfrac{\phi^{3}}{(1-\phi)^{2}}\qquad\text{(Kozeny–Carman trend)}"
+            caption="Why porosity and permeability are plotted together, on a log scale"
+          />
+          <FieldNote>
+            Porosity <M tex="\phi" /> says how much fluid the rock can store; permeability{" "}
+            <M tex="k" /> says how easily it will give it up. Applying cut-offs here is exactly how
+            net pay is picked — plugs under about 8 % porosity or 1 mD rarely flow commercially. The
+            crossplot exposes rock types: parallel trends usually mean different facies or different
+            cementation histories, and each one deserves its own permeability transform.
+          </FieldNote>
+        </div>
+      </div>
+
         <div className="flex flex-wrap items-center gap-3">
           <button
             onClick={() => inputRef.current?.click()}

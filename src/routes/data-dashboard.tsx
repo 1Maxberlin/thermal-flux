@@ -283,7 +283,9 @@ function DashboardPage() {
         </div>
       </div>
 
+      <div className="panel p-5 sm:p-6">
         <div className="flex flex-wrap items-center gap-3">
+
           <button
             onClick={() => inputRef.current?.click()}
             className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-transform hover:-translate-y-0.5"

@@ -15,6 +15,15 @@ import {
 import { AlertTriangle, Download, FileUp, Sparkles } from "lucide-react";
 import { AppShell, Field, Metric, PageHeader } from "@/components/AppShell";
 import { Equation, FieldNote, M } from "@/components/Math";
+import { AdvisorPanel } from "@/components/Advisor";
+import {
+  dykstraParsons,
+  flowZoneIndicator,
+  permeabilityClass,
+  reservoirAdvisories,
+  reservoirQualityIndex,
+  winlandR35,
+} from "@/lib/advisor";
 
 import { downloadFile, fmt, toCsv } from "@/lib/engineering";
 import { toast } from "sonner";
@@ -220,6 +229,30 @@ function DashboardPage() {
     () => filtered.map((r) => Number(r[permCol])).filter((v) => Number.isFinite(v)),
     [filtered, permCol],
   );
+
+  /** Petrophysical screening indicators and ranked completion guidance. */
+  const reservoir = useMemo(() => {
+    if (porValues.length === 0 || permValues.length === 0) return null;
+    const meanPor = porValues.reduce((a, b) => a + b, 0) / porValues.length;
+    const sortedK = [...permValues].sort((a, b) => a - b);
+    const medianK = sortedK[Math.floor(sortedK.length / 2)]!;
+    const porFraction = meanPor > 1 ? meanPor / 100 : meanPor;
+    const rqi = reservoirQualityIndex(medianK, porFraction);
+    const fzi = flowZoneIndicator(medianK, porFraction);
+    const r35 = winlandR35(medianK, meanPor > 1 ? meanPor : meanPor * 100);
+    const vdp = dykstraParsons(permValues);
+    const netToGross = rows.length > 0 ? filtered.length / rows.length : 0;
+    const advisories = reservoirAdvisories({
+      meanPorosityPct: meanPor > 1 ? meanPor : meanPor * 100,
+      medianPermMd: medianK,
+      r35,
+      vdp,
+      netToGross,
+      count: rows.length,
+    });
+    return { meanPor, medianK, rqi, fzi, r35, vdp, netToGross, advisories };
+  }, [porValues, permValues, rows.length, filtered.length]);
+
 
   const histogram = useMemo(() => {
     if (porValues.length === 0) return [];

@@ -13,6 +13,14 @@ import {
 import { Download, AlertTriangle } from "lucide-react";
 import { AppShell, Field, Metric, PageHeader } from "@/components/AppShell";
 import { Equation, FieldNote, M } from "@/components/Math";
+import { AdvisorPanel } from "@/components/Advisor";
+import {
+  DEFAULT_ECONOMICS,
+  diameterForVelocity,
+  erosionalVelocity,
+  flowAdvisories,
+  hydraulicEconomics,
+} from "@/lib/advisor";
 
 import { FLUID_LIBRARY, Fluid, Pipe, downloadFile, fmt, toCsv } from "@/lib/engineering";
 import { toast } from "sonner";
@@ -101,6 +109,63 @@ function PipeFlowPage() {
       return { error: (e as Error).message, result: null, pipe: null, q: 0, sweep: [] };
     }
   }, [fluidResult, diameterMm, lengthM, roughnessMm, flowLps]);
+
+  const [energyCost, setEnergyCost] = useState("0.12");
+  const [efficiency, setEfficiency] = useState("65");
+  const [runHours, setRunHours] = useState("8000");
+
+  const econ = useMemo(
+    () => ({
+      energyCost: numberOr(energyCost, DEFAULT_ECONOMICS.energyCost),
+      efficiency: Math.min(0.98, Math.max(0.05, numberOr(efficiency, 65) / 100)),
+      hoursPerYear: numberOr(runHours, DEFAULT_ECONOMICS.hoursPerYear),
+    }),
+    [energyCost, efficiency, runHours],
+  );
+
+  /** Economics, screening limits and advisories derived from the current duty point. */
+  const decision = useMemo(() => {
+    const r = analysis.result;
+    const fluid = fluidResult.fluid;
+    if (!r || !fluid) return null;
+    const money = hydraulicEconomics(analysis.q, r.pressureDrop, econ);
+    const ve = erosionalVelocity(fluid.density);
+    const gradient = r.pressureDrop / Math.max(1e-9, numberOr(lengthM, 1));
+    const advisories = flowAdvisories({
+      velocity: r.velocity,
+      reynolds: r.reynolds,
+      regime: r.regime,
+      pressureDrop: r.pressureDrop,
+      gradient,
+      density: fluid.density,
+      diameter: numberOr(diameterMm, 0) / 1000,
+      length: numberOr(lengthM, 0),
+      flowRate: analysis.q,
+      relativeRoughness: r.relativeRoughness,
+      gasLike: fluid.density < 50,
+    });
+    return { money, ve, gradient, advisories, recommended: diameterForVelocity(analysis.q, 2) * 1000 };
+  }, [analysis, fluidResult, econ, diameterMm, lengthM]);
+
+  /** Bore-size sweep: how ΔP and velocity respond to changing the line size. */
+  const sizing = useMemo(() => {
+    const fluid = fluidResult.fluid;
+    if (!fluid || !analysis.result || analysis.q <= 0) return [];
+    const base = numberOr(diameterMm, 100);
+    const out: { d: number; dp: number; v: number }[] = [];
+    for (let i = 0; i < 40; i++) {
+      const d = base * (0.5 + (i * 1.5) / 39);
+      try {
+        const pipe = new Pipe(d / 1000, numberOr(lengthM, 1), numberOr(roughnessMm, 0.045) / 1000);
+        const res = pipe.analyse(fluid, analysis.q);
+        out.push({ d, dp: res.pressureDrop / 1000, v: res.velocity });
+      } catch {
+        /* skip invalid geometry */
+      }
+    }
+    return out;
+  }, [fluidResult, analysis, diameterMm, lengthM, roughnessMm]);
+
 
   const handleExport = () => {
     const { result, sweep } = analysis;
@@ -281,6 +346,39 @@ function PipeFlowPage() {
             />
           </Field>
 
+          <div className="rounded-xl border border-border/70 bg-background/40 p-4">
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
+              Operating economics
+            </p>
+            <div className="mt-3 space-y-3">
+              <Field label="Energy price (per kWh)">
+                <input
+                  type="number"
+                  step="0.01"
+                  value={energyCost}
+                  onChange={(e) => setEnergyCost(e.target.value)}
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-base"
+                />
+              </Field>
+              <Field label="Pump efficiency (%)">
+                <input
+                  type="number"
+                  value={efficiency}
+                  onChange={(e) => setEfficiency(e.target.value)}
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-base"
+                />
+              </Field>
+              <Field label="Operating hours per year">
+                <input
+                  type="number"
+                  value={runHours}
+                  onChange={(e) => setRunHours(e.target.value)}
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-base"
+                />
+              </Field>
+            </div>
+          </div>
+
           <button
             onClick={handleExport}
             className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-transform hover:-translate-y-0.5 disabled:opacity-50"
@@ -288,6 +386,7 @@ function PipeFlowPage() {
             <Download className="size-4" /> Export results to CSV
           </button>
         </aside>
+
 
         {/* Results */}
         <div className="space-y-6">
@@ -320,6 +419,42 @@ function PipeFlowPage() {
                   hint={`${fmt(r.headLoss, 3)} m head loss`}
                 />
               </div>
+
+              {decision ? (
+                <>
+                  <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                    <Metric
+                      label="Erosional limit (API RP 14E)"
+                      value={fmt(decision.ve, 2)}
+                      unit="m/s"
+                      hint={`Operating at ${((r.velocity / decision.ve) * 100).toFixed(0)} % of limit`}
+                    />
+                    <Metric
+                      label="Pressure gradient"
+                      value={fmt((decision.gradient * 100 * 0.3048) / 6894.757, 3)}
+                      unit="psi/100 ft"
+                      hint={`${fmt(decision.gradient / 1000, 4)} kPa/m`}
+                    />
+                    <Metric
+                      label="Friction power"
+                      value={fmt(decision.money.shaftPower / 1000, 2)}
+                      unit="kW shaft"
+                      hint={`${fmt(decision.money.hydraulicPower / 1000, 2)} kW hydraulic`}
+                    />
+                    <Metric
+                      label="Annual pumping cost"
+                      value={decision.money.annualCost.toLocaleString(undefined, {
+                        maximumFractionDigits: 0,
+                      })}
+                      hint={`${fmt(decision.money.annualEnergy, 0)} kWh/yr of friction alone`}
+                    />
+                  </div>
+
+                  <AdvisorPanel advisories={decision.advisories} />
+                </>
+              ) : null}
+
+
 
               <div className="grid gap-4 md:grid-cols-2">
                 <FieldNote title="Reading the Reynolds number">

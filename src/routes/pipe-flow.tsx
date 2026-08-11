@@ -4,6 +4,7 @@ import {
   CartesianGrid,
   Line,
   LineChart,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -542,6 +543,96 @@ function PipeFlowPage() {
                   </ResponsiveContainer>
                 </div>
               </div>
+
+              {sizing.length > 0 && decision ? (
+                <div className="panel p-5">
+                  <div className="mb-4 grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-2 sm:flex sm:flex-wrap sm:justify-between">
+                    <h2 className="min-w-0 font-display text-lg font-bold">Line-size optimiser</h2>
+                    <p className="shrink-0 text-xs text-muted-foreground">
+                      Same duty, different bore · dashed line = erosional limit
+                    </p>
+                  </div>
+                  <div className="h-[320px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={sizing} margin={{ top: 8, right: 16, bottom: 24, left: 8 }}>
+                        <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
+                        <XAxis
+                          dataKey="d"
+                          stroke="var(--muted-foreground)"
+                          tick={{ fontSize: 11 }}
+                          tickFormatter={(v: number) => v.toFixed(0)}
+                          label={{
+                            value: "Internal diameter (mm)",
+                            position: "insideBottom",
+                            offset: -12,
+                            fill: "var(--muted-foreground)",
+                            fontSize: 12,
+                          }}
+                        />
+                        <YAxis
+                          yAxisId="dp"
+                          stroke="var(--primary)"
+                          tick={{ fontSize: 11 }}
+                          width={66}
+                          tickFormatter={(v: number) => v.toFixed(0)}
+                        />
+                        <YAxis
+                          yAxisId="v"
+                          orientation="right"
+                          stroke="var(--flame)"
+                          tick={{ fontSize: 11 }}
+                          width={50}
+                          tickFormatter={(v: number) => v.toFixed(1)}
+                        />
+                        <Tooltip
+                          contentStyle={{
+                            background: "var(--popover)",
+                            border: "1px solid var(--border)",
+                            borderRadius: 8,
+                            fontSize: 12,
+                          }}
+                          labelFormatter={(v: number) => `D = ${Number(v).toFixed(1)} mm`}
+                        />
+                        <Line
+                          yAxisId="dp"
+                          type="monotone"
+                          dataKey="dp"
+                          name="ΔP (kPa)"
+                          stroke="var(--primary)"
+                          strokeWidth={2.5}
+                          dot={false}
+                          isAnimationActive={false}
+                        />
+                        <Line
+                          yAxisId="v"
+                          type="monotone"
+                          dataKey="v"
+                          name="Velocity (m/s)"
+                          stroke="var(--flame)"
+                          strokeWidth={2.5}
+                          dot={false}
+                          isAnimationActive={false}
+                        />
+                        <ReferenceLine
+                          yAxisId="v"
+                          y={decision.ve}
+                          stroke="var(--flame)"
+                          strokeDasharray="5 4"
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <p className="mt-3 text-sm text-muted-foreground">
+                    Doubling the bore cuts friction roughly 32-fold (<M tex="\Delta P \propto D^{-5}" />
+                    ). For this duty a bore near{" "}
+                    <strong className="text-foreground">{decision.recommended.toFixed(0)} mm</strong>{" "}
+                    holds the classic 2 m/s design velocity — compare that against the steel cost
+                    before committing.
+                  </p>
+                </div>
+              ) : null}
+
+
 
               <div className="panel overflow-hidden">
                 <table className="w-full text-sm">

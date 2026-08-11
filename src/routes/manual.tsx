@@ -136,10 +136,37 @@ function ManualPage() {
           </Link>
         </Card>
 
+        <Card icon={SlidersHorizontal} title="Decision advisors">
+          <p>
+            Every tool ends with a ranked advisor panel. Findings are colour-coded — red needs
+            action, amber needs review, green is acceptable — and each one names the criterion it
+            applied and the next step to take.
+          </p>
+          <ul className="ml-5 list-disc space-y-2">
+            <li>
+              <strong className="text-foreground">Hydraulics:</strong> API RP 14E erosional velocity,
+              the 1–3 m/s solids-transport window, psi/100 ft gradient screening, annual pumping cost
+              at your own energy price, and a line-size optimiser chart.
+            </li>
+            <li>
+              <strong className="text-foreground">Thermal:</strong> annual value of the heat loss, a
+              personnel burn-hazard check, an insulation-thickness study against the 100 W/m² target,
+              a Biot-number validity test and a cool-down window measured against your crew response
+              time and the fluid's wax or hydrate temperature.
+            </li>
+            <li>
+              <strong className="text-foreground">Rock &amp; fluid:</strong> rock class, Winland r35
+              pore throat, RQI/FZI flow units, Dykstra–Parsons heterogeneity and net-to-gross, with
+              completion and conformance guidance.
+            </li>
+          </ul>
+        </Card>
+
         <Card icon={Download} title="Units, accuracy and exports">
           <ul className="ml-5 list-disc space-y-2">
-            <li>All internal physics is in SI; convenience units (mm, L/s, kPa, minutes) are converted at the edge.</li>
+            <li>All internal physics is in SI; convenience units (mm, L/s, kPa, minutes, psi/100 ft) are converted at the edge.</li>
             <li>Correlations are single-phase and isothermal; two-phase flow, minor losses and fittings are not included.</li>
+            <li>Advisor thresholds are screening criteria, not a substitute for a full design review.</li>
             <li>Exported CSV files open directly in Excel and match the numbers shown on screen to the displayed precision.</li>
           </ul>
         </Card>

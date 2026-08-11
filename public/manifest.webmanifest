@@ -1,0 +1,15 @@
+{
+  "name": "Thermaflux — Flow & Thermal Engineering Studio",
+  "short_name": "Thermaflux",
+  "description": "Field-grade pipe hydraulics, heat transfer and rock & fluid analytics with built-in engineering decision support.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#070b16",
+  "theme_color": "#070b16",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

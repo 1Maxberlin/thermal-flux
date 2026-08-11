@@ -13,6 +13,8 @@ import {
 import { AlertTriangle, Download } from "lucide-react";
 import { AppShell, Field, Metric, PageHeader } from "@/components/AppShell";
 import { Equation, FieldNote, M } from "@/components/Math";
+import { AdvisorPanel } from "@/components/Advisor";
+import { biotNumber, conductionAdvisories, coolingAdvisories } from "@/lib/advisor";
 
 import { conductionThroughWall, downloadFile, fmt, newtonCooling, toCsv } from "@/lib/engineering";
 import { toast } from "sonner";
@@ -168,6 +170,52 @@ function HeatTransferPage() {
   const c = conduction.data;
   const cool = cooling.res;
 
+  // Flow-assurance context for the cooling advisor
+  const [riskTemp, setRiskTemp] = useState("35");
+  const [responseHours, setResponseHours] = useState("4");
+
+  const conductionAdvice = useMemo(
+    () =>
+      c
+        ? conductionAdvisories({
+            heatRate: c.heatRate,
+            heatFlux: c.heatFlux,
+            k: num(k),
+            thickness: num(thickness),
+            tHot: num(tHot),
+            tCold: num(tCold),
+          })
+        : [],
+    [c, k, thickness, tHot, tCold],
+  );
+
+  /** How heat flux and annual loss respond to insulation thickness. */
+  const thicknessSweep = useMemo(() => {
+    if (!c) return [];
+    const base = Math.max(num(thickness), 1e-4);
+    return Array.from({ length: 40 }, (_, i) => {
+      const L = base * (0.25 + (i * 3.75) / 39);
+      const flux = (num(k) * Math.abs(num(tHot) - num(tCold))) / L;
+      return { L: L * 1000, flux, kw: (flux * num(area)) / 1000 };
+    });
+  }, [c, thickness, k, tHot, tCold, area]);
+
+  const coolingAdvice = useMemo(() => {
+    if (!cool) return [];
+    return coolingAdvisories({
+      tau: cool.tau,
+      timeToTarget: cool.timeToTarget,
+      t0: num(t0),
+      tInf: num(tInf),
+      tTarget: num(tTarget),
+      biot: biotNumber(num(h), num(volume), num(coolArea), num(k)),
+      riskTemp: num(riskTemp),
+      responseHours: Math.max(0.25, num(responseHours)),
+      temperatureAt: cool.temperatureAt,
+    });
+  }, [cool, t0, tInf, tTarget, h, volume, coolArea, k, riskTemp, responseHours]);
+
+
   return (
     <AppShell>
       <PageHeader
@@ -303,7 +351,80 @@ function HeatTransferPage() {
             ) : null}
           </div>
         </div>
+
+        {c ? (
+          <div className="mt-6 space-y-6">
+            <div className="rounded-2xl border border-border/70 bg-background/40 p-4 sm:p-5">
+              <div className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-2 sm:flex sm:justify-between">
+                <h3 className="min-w-0 font-display text-base font-bold">
+                  Insulation thickness study
+                </h3>
+                <p className="shrink-0 text-xs text-muted-foreground">
+                  Flux target for insulated equipment ≈ 100 W/m²
+                </p>
+              </div>
+              <div className="mt-3 h-[260px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={thicknessSweep} margin={{ top: 8, right: 12, bottom: 22, left: 4 }}>
+                    <defs>
+                      <linearGradient id="fluxFill" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="var(--primary)" stopOpacity={0.45} />
+                        <stop offset="100%" stopColor="var(--primary)" stopOpacity={0.04} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
+                    <XAxis
+                      dataKey="L"
+                      stroke="var(--muted-foreground)"
+                      tick={{ fontSize: 11 }}
+                      tickFormatter={(v: number) => v.toFixed(0)}
+                      label={{
+                        value: "Thickness (mm)",
+                        position: "insideBottom",
+                        offset: -12,
+                        fill: "var(--muted-foreground)",
+                        fontSize: 12,
+                      }}
+                    />
+                    <YAxis
+                      stroke="var(--muted-foreground)"
+                      tick={{ fontSize: 11 }}
+                      width={64}
+                      tickFormatter={(v: number) => v.toFixed(0)}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        background: "var(--popover)",
+                        border: "1px solid var(--border)",
+                        borderRadius: 8,
+                        fontSize: 12,
+                      }}
+                      formatter={(v: number) => [`${v.toFixed(1)} W/m²`, "Heat flux"]}
+                      labelFormatter={(v: number) => `L = ${Number(v).toFixed(1)} mm`}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="flux"
+                      stroke="var(--primary)"
+                      strokeWidth={2.5}
+                      fill="url(#fluxFill)"
+                      isAnimationActive={false}
+                    />
+                    <ReferenceLine y={100} stroke="var(--flame)" strokeDasharray="5 4" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            <AdvisorPanel
+              advisories={conductionAdvice}
+              title="Insulation decision advisor"
+              subtitle="What this heat loss costs, and whether the wall needs a jacket."
+            />
+          </div>
+        ) : null}
       </section>
+
 
       {/* Cooling */}
       <section className="panel mt-6 p-5 sm:p-6">
@@ -539,7 +660,43 @@ function HeatTransferPage() {
             ) : null}
           </div>
         </div>
+
+        {cool ? (
+          <div className="mt-6 space-y-4">
+            <div className="grid gap-4 rounded-2xl border border-border/70 bg-background/40 p-4 sm:grid-cols-2 sm:p-5">
+              <Field
+                label="Flow-assurance risk temperature (°C)"
+                hint="Wax appearance or hydrate formation temperature for this fluid"
+              >
+                <input
+                  type="number"
+                  value={riskTemp}
+                  onChange={(e) => setRiskTemp(e.target.value)}
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-base outline-none focus:ring-2 focus:ring-ring"
+                />
+              </Field>
+              <Field
+                label="Available response time (h)"
+                hint="How long the crew realistically needs to intervene after a shutdown"
+              >
+                <input
+                  type="number"
+                  step="0.5"
+                  value={responseHours}
+                  onChange={(e) => setResponseHours(e.target.value)}
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-base outline-none focus:ring-2 focus:ring-ring"
+                />
+              </Field>
+            </div>
+            <AdvisorPanel
+              advisories={coolingAdvice}
+              title="Cool-down & flow-assurance advisor"
+              subtitle="Whether the system survives an unplanned shutdown, and whether the lumped model can be trusted."
+            />
+          </div>
+        ) : null}
       </section>
+
     </AppShell>
   );
 }

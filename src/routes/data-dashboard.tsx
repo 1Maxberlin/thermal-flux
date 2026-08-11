@@ -15,6 +15,15 @@ import {
 import { AlertTriangle, Download, FileUp, Sparkles } from "lucide-react";
 import { AppShell, Field, Metric, PageHeader } from "@/components/AppShell";
 import { Equation, FieldNote, M } from "@/components/Math";
+import { AdvisorPanel } from "@/components/Advisor";
+import {
+  dykstraParsons,
+  flowZoneIndicator,
+  permeabilityClass,
+  reservoirAdvisories,
+  reservoirQualityIndex,
+  winlandR35,
+} from "@/lib/advisor";
 
 import { downloadFile, fmt, toCsv } from "@/lib/engineering";
 import { toast } from "sonner";
@@ -220,6 +229,30 @@ function DashboardPage() {
     () => filtered.map((r) => Number(r[permCol])).filter((v) => Number.isFinite(v)),
     [filtered, permCol],
   );
+
+  /** Petrophysical screening indicators and ranked completion guidance. */
+  const reservoir = useMemo(() => {
+    if (porValues.length === 0 || permValues.length === 0) return null;
+    const meanPor = porValues.reduce((a, b) => a + b, 0) / porValues.length;
+    const sortedK = [...permValues].sort((a, b) => a - b);
+    const medianK = sortedK[Math.floor(sortedK.length / 2)]!;
+    const porFraction = meanPor > 1 ? meanPor / 100 : meanPor;
+    const rqi = reservoirQualityIndex(medianK, porFraction);
+    const fzi = flowZoneIndicator(medianK, porFraction);
+    const r35 = winlandR35(medianK, meanPor > 1 ? meanPor : meanPor * 100);
+    const vdp = dykstraParsons(permValues);
+    const netToGross = rows.length > 0 ? filtered.length / rows.length : 0;
+    const advisories = reservoirAdvisories({
+      meanPorosityPct: meanPor > 1 ? meanPor : meanPor * 100,
+      medianPermMd: medianK,
+      r35,
+      vdp,
+      netToGross,
+      count: rows.length,
+    });
+    return { meanPor, medianK, rqi, fzi, r35, vdp, netToGross, advisories };
+  }, [porValues, permValues, rows.length, filtered.length]);
+
 
   const histogram = useMemo(() => {
     if (porValues.length === 0) return [];
@@ -429,6 +462,56 @@ function DashboardPage() {
                   value={permValues.length ? fmt(stats(permValues)!.max, 2) : "—"}
                 />
               </div>
+
+              {reservoir ? (
+                <>
+                  <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                    <Metric
+                      label="Rock class"
+                      value={permeabilityClass(reservoir.medianK)}
+                      hint={`Median k = ${fmt(reservoir.medianK, 2)} mD`}
+                    />
+                    <Metric
+                      label="Winland r35"
+                      value={Number.isFinite(reservoir.r35) ? fmt(reservoir.r35, 2) : "—"}
+                      unit="µm"
+                      hint="Pore-throat radius at 35 % mercury saturation"
+                    />
+                    <Metric
+                      label="Flow zone indicator"
+                      value={Number.isFinite(reservoir.fzi) ? fmt(reservoir.fzi, 3) : "—"}
+                      unit="µm"
+                      hint={`RQI = ${Number.isFinite(reservoir.rqi) ? fmt(reservoir.rqi, 3) : "—"} µm`}
+                    />
+                    <Metric
+                      label="Net-to-gross"
+                      value={`${(reservoir.netToGross * 100).toFixed(0)} %`}
+                      hint={
+                        Number.isFinite(reservoir.vdp)
+                          ? `Dykstra–Parsons V = ${reservoir.vdp.toFixed(2)}`
+                          : "Cut-offs currently applied"
+                      }
+                    />
+                  </div>
+
+                  <FieldNote title="How these indicators are used">
+                    <M tex="RQI = 0.0314\sqrt{k/\phi}" /> and{" "}
+                    <M tex="FZI = RQI/\phi_z" /> group plugs into hydraulic flow units, so a single
+                    permeability transform can be applied per unit rather than one noisy fit for the
+                    whole well. Winland <M tex="r_{35}" /> converts that into a pore-throat size,
+                    which is what actually controls whether the rock will flow, and the
+                    Dykstra–Parsons coefficient tells you how badly a waterflood will finger.
+                  </FieldNote>
+
+                  <AdvisorPanel
+                    advisories={reservoir.advisories}
+                    title="Reservoir & completion advisor"
+                    subtitle="Screening guidance generated from the filtered plug population."
+                  />
+                </>
+              ) : null}
+
+
 
               <div className="panel overflow-x-auto">
                 <h2 className="px-5 pt-5 font-display text-lg font-bold">Summary statistics</h2>

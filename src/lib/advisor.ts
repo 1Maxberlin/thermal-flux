@@ -15,7 +15,7 @@ export interface Advisory {
   title: string;
   detail: string;
   /** Concrete next step for the engineer. */
-  action?: string;
+  action?: string | undefined;
 }
 
 export const SEVERITY_RANK: Record<Severity, number> = {

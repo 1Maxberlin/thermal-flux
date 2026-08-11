@@ -3,14 +3,14 @@ import { Moon, Sun } from "lucide-react";
 
 type Theme = "light" | "dark";
 
-/** Read the theme already applied by the pre-hydration script. */
+/** Read the theme already applied by the pre-hydration script (dark by default). */
 function currentTheme(): Theme {
-  if (typeof document === "undefined") return "light";
+  if (typeof document === "undefined") return "dark";
   return document.documentElement.classList.contains("dark") ? "dark" : "light";
 }
 
 export function ThemeToggle() {
-  const [theme, setTheme] = useState<Theme>("light");
+  const [theme, setTheme] = useState<Theme>("dark");
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {

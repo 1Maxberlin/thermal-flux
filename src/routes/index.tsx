@@ -69,7 +69,7 @@ function Index() {
       {/* Hero with looping background video */}
       <section className="group relative isolate overflow-hidden">
         <video
-          className="absolute inset-0 -z-20 size-full object-cover opacity-70 transition-all duration-700 group-hover:scale-105 group-hover:opacity-90 dark:opacity-55 dark:group-hover:opacity-75"
+          className="absolute inset-0 -z-20 size-full object-cover opacity-95 transition-transform duration-[1200ms] ease-out group-hover:scale-105 dark:opacity-100"
           src={heroVideo.url}
           autoPlay
           muted
@@ -78,8 +78,10 @@ function Index() {
           preload="auto"
           aria-hidden="true"
         />
-        <div className="absolute inset-0 -z-10 bg-gradient-to-r from-background via-background/85 to-background/45" />
-        <div className="absolute inset-0 -z-10 bg-gradient-to-t from-background via-transparent to-background/60" />
+        {/* Readability scrim: strong behind the copy, near-clear over the footage */}
+        <div className="absolute inset-0 -z-10 bg-gradient-to-r from-background/92 via-background/55 to-transparent" />
+        <div className="absolute inset-0 -z-10 bg-gradient-to-t from-background via-background/20 to-transparent" />
+
 
         <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 sm:py-28 lg:py-36">
           <div className="max-w-3xl">

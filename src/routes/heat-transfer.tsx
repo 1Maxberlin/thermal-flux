@@ -660,7 +660,43 @@ function HeatTransferPage() {
             ) : null}
           </div>
         </div>
+
+        {cool ? (
+          <div className="mt-6 space-y-4">
+            <div className="grid gap-4 rounded-2xl border border-border/70 bg-background/40 p-4 sm:grid-cols-2 sm:p-5">
+              <Field
+                label="Flow-assurance risk temperature (°C)"
+                hint="Wax appearance or hydrate formation temperature for this fluid"
+              >
+                <input
+                  type="number"
+                  value={riskTemp}
+                  onChange={(e) => setRiskTemp(e.target.value)}
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-base outline-none focus:ring-2 focus:ring-ring"
+                />
+              </Field>
+              <Field
+                label="Available response time (h)"
+                hint="How long the crew realistically needs to intervene after a shutdown"
+              >
+                <input
+                  type="number"
+                  step="0.5"
+                  value={responseHours}
+                  onChange={(e) => setResponseHours(e.target.value)}
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-base outline-none focus:ring-2 focus:ring-ring"
+                />
+              </Field>
+            </div>
+            <AdvisorPanel
+              advisories={coolingAdvice}
+              title="Cool-down & flow-assurance advisor"
+              subtitle="Whether the system survives an unplanned shutdown, and whether the lumped model can be trusted."
+            />
+          </div>
+        ) : null}
       </section>
+
     </AppShell>
   );
 }

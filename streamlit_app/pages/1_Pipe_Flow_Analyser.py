@@ -11,7 +11,7 @@ sys.path.append(str(Path(__file__).resolve().parents[1]))
 from engineering import FLUID_LIBRARY, Fluid, Pipe  # noqa: E402
 import units as U  # noqa: E402
 from advisors import flow_advisories, hydraulic_economics  # noqa: E402
-from theme import apply_theme, hero, divider, footer, LOGO_PATH  # noqa: E402
+from theme import apply_theme, hero, divider, footer  # noqa: E402
 
 st.set_page_config(page_title="Pipe Flow Analyser", page_icon="🔧", layout="wide")
 apply_theme()
@@ -24,6 +24,15 @@ hero(
             "equation in turbulent flow; pressure drop follows Darcy–Weisbach.",
 )
 
+st.info(
+    "**What this means in the field** — line sizing is a money decision. A larger "
+    "bore cuts ΔP roughly as D⁻⁵, so a small diameter increase slashes pumping "
+    "horsepower and fuel cost — but adds steel, coating and installation cost. "
+    "Flowlines are usually sized to keep velocity in the 1–3 m/s window: fast "
+    "enough to lift solids, slow enough to avoid erosion-corrosion.",
+    icon="💡",
+)
+
 ROUGHNESS = {
     "Drawn tubing / PVC": 0.0015,
     "Commercial steel": 0.045,
@@ -31,14 +40,6 @@ ROUGHNESS = {
     "Cast iron": 0.26,
     "Concrete (rough)": 3.0,
 }
-
-st.info(
-    "**What this means in the field** — Line sizing is a money decision. A larger "
-    "bore cuts ΔP roughly as D⁻⁵, so a small diameter increase slashes pumping "
-    "horsepower and fuel cost — but adds steel, coating and installation cost. "
-    "Flowlines are usually sized to keep velocity in the 1–3 m/s window.",
-    icon="💡",
-)
 
 U.sidebar_unit_switch()
 
@@ -51,7 +52,7 @@ with st.sidebar:
         fluid = Fluid("User-defined", rho, mu)
     else:
         fluid = FLUID_LIBRARY[choice]
-        st.write(f"ρ = **{fluid.density:.3f} kg/m³**, μ = **{fluid.viscosity:.3e} Pa·s**")
+        st.caption(f"ρ = **{fluid.density:.3f} kg/m³**, μ = **{fluid.viscosity:.3e} Pa·s**")
 
     d_mm = st.number_input("Internal diameter D (mm)", value=100.0, min_value=0.1)
     length = st.number_input("Pipe length L (m)", value=250.0, min_value=0.01)
@@ -64,6 +65,7 @@ try:
     q = q_lps / 1000
     res = pipe.analyse(fluid, q)
 
+    st.subheader("Results")
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("Velocity", f"{U.to_display('velocity', res['velocity']):.3f} {U.label('velocity')}")
     c2.metric("Reynolds number", f"{res['reynolds']:,.0f}", res["regime"])
@@ -79,10 +81,14 @@ try:
     e1.metric("Friction power", f"{money['shaft_power']/1000:.2f} kW shaft")
     e2.metric("Annual pumping cost", f"{money['annual_cost']:,.0f}")
 
+    divider()
+
     st.subheader("Decision advisor")
     for advice in flow_advisories(res, fluid.density, length, gas_like=fluid.density < 50):
         text = f"**{advice.title}** — {advice.detail}" + (f" _{advice.action}_" if advice.action else "")
         (st.error if advice.severity == "critical" else st.warning if advice.severity == "review" else st.success)(text)
+
+    divider()
 
     sweep = pd.DataFrame(
         [
@@ -123,6 +129,7 @@ try:
         file_name="pipe_flow_results.csv",
         mime="text/csv",
     )
+
     divider()
     footer()
 except ValueError as exc:

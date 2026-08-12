@@ -4,6 +4,11 @@ Import `apply_theme()` at the top of every page (app.py and each file in
 pages/) to get consistent fonts, colours, and the reusable component
 helpers (hero header, metric cards, module cards).
 
+Supports both Streamlit light and dark mode: colours are defined as CSS
+custom properties on :root (light values) and overridden inside
+[data-theme="dark"], which Streamlit sets automatically on the app
+container when the user toggles dark mode from the menu. No JS needed.
+
 Nothing in here touches engineering.py or any calculation logic — this
 file is presentation only.
 """
@@ -16,11 +21,10 @@ ASSETS_DIR = Path(__file__).parent / "assets"
 LOGO_PATH = ASSETS_DIR / "logo.png"
 
 # ----------------------------------------------------------------------
-# Palette — light theme. Cyan -> blue -> violet accent family kept from
-# the original brand, now used as accents on a white/near-white surface
-# instead of as text-fill on dark.
+# Palettes — light is the default; dark mirrors it with the same accent
+# family (cyan -> blue -> violet -> amber/flame) tuned for a dark surface.
 # ----------------------------------------------------------------------
-COLORS = {
+LIGHT = {
     "bg": "#FFFFFF",
     "bg_soft": "#F7F9FC",
     "panel": "#FFFFFF",
@@ -34,7 +38,30 @@ COLORS = {
     "text_soft": "#475569",
     "text_faint": "#94A3B8",
     "success": "#059669",
+    "shadow": "rgba(15, 23, 42, 0.06)",
+    "hero_bg": "linear-gradient(135deg, #F8FAFF 0%, #F1F5FF 55%, #FAF5FF 100%)",
 }
+
+DARK = {
+    "bg": "#0B1120",
+    "bg_soft": "#111A2E",
+    "panel": "#131B2E",
+    "panel_border": "rgba(148, 163, 184, 0.16)",
+    "cyan": "#22D3EE",
+    "blue": "#60A5FA",
+    "violet": "#A78BFA",
+    "amber": "#FBBF24",
+    "flame": "#FB923C",
+    "text": "#F1F5F9",
+    "text_soft": "#CBD5E1",
+    "text_faint": "#7C8AA5",
+    "success": "#34D399",
+    "shadow": "rgba(0, 0, 0, 0.35)",
+    "hero_bg": "linear-gradient(135deg, #0F1830 0%, #101B36 55%, #14133A 100%)",
+}
+
+# Kept for any code that imports COLORS directly (light values as default reference)
+COLORS = LIGHT
 
 
 @st.cache_data(show_spinner=False)
@@ -45,10 +72,28 @@ def _logo_base64() -> str | None:
     return base64.b64encode(LOGO_PATH.read_bytes()).decode()
 
 
+def _vars(palette: dict) -> str:
+    return f"""
+        --bg: {palette['bg']};
+        --bg-soft: {palette['bg_soft']};
+        --panel: {palette['panel']};
+        --panel-border: {palette['panel_border']};
+        --cyan: {palette['cyan']};
+        --blue: {palette['blue']};
+        --violet: {palette['violet']};
+        --amber: {palette['amber']};
+        --flame: {palette['flame']};
+        --text: {palette['text']};
+        --text-soft: {palette['text_soft']};
+        --text-faint: {palette['text_faint']};
+        --success: {palette['success']};
+        --shadow: {palette['shadow']};
+        --hero-bg: {palette['hero_bg']};
+    """
+
+
 def apply_theme(page_icon_only: bool = False) -> None:
     """Inject the shared CSS. Call once, immediately after st.set_page_config()."""
-
-    logo_b64 = _logo_base64()
 
     st.markdown(
         f"""
@@ -56,20 +101,21 @@ def apply_theme(page_icon_only: bool = False) -> None:
 
         @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
+        /* ---------------- Palette: light by default ---------------- */
         :root {{
-            --bg: {COLORS['bg']};
-            --bg-soft: {COLORS['bg_soft']};
-            --panel: {COLORS['panel']};
-            --panel-border: {COLORS['panel_border']};
-            --cyan: {COLORS['cyan']};
-            --blue: {COLORS['blue']};
-            --violet: {COLORS['violet']};
-            --amber: {COLORS['amber']};
-            --flame: {COLORS['flame']};
-            --text: {COLORS['text']};
-            --text-soft: {COLORS['text_soft']};
-            --text-faint: {COLORS['text_faint']};
-            --success: {COLORS['success']};
+            {_vars(LIGHT)}
+        }}
+
+        /* ---------------- Palette: dark overrides ----------------
+           Streamlit sets data-theme="dark" on the app view container
+           when the user picks Dark in Settings > Theme. Covering both
+           selectors below (root-level and container-level) makes this
+           robust across Streamlit versions. */
+        [data-theme="dark"] {{
+            {_vars(DARK)}
+        }}
+        html[data-theme="dark"] {{
+            {_vars(DARK)}
         }}
 
         html, body, [class*="css"] {{
@@ -80,13 +126,14 @@ def apply_theme(page_icon_only: bool = False) -> None:
             font-family: 'JetBrains Mono', monospace !important;
         }}
 
-        /* ---------------- App background: soft, clean, light ---------------- */
+        /* ---------------- App background ---------------- */
         .stApp {{
             background:
-                radial-gradient(circle at 12% 0%, rgba(37, 99, 235, 0.05) 0%, transparent 40%),
-                radial-gradient(circle at 88% 10%, rgba(124, 58, 237, 0.05) 0%, transparent 45%),
+                radial-gradient(circle at 12% 0%, rgba(37, 99, 235, 0.06) 0%, transparent 40%),
+                radial-gradient(circle at 88% 10%, rgba(124, 58, 237, 0.06) 0%, transparent 45%),
                 var(--bg);
             background-attachment: fixed;
+            transition: background 0.2s ease;
         }}
 
         [data-testid="stSidebar"] {{
@@ -120,8 +167,9 @@ def apply_theme(page_icon_only: bool = False) -> None:
             border-radius: 24px;
             margin-bottom: 1.8rem;
             overflow: hidden;
-            background: linear-gradient(135deg, #F8FAFF 0%, #F1F5FF 55%, #FAF5FF 100%);
+            background: var(--hero-bg);
             border: 1px solid var(--panel-border);
+            transition: background 0.2s ease;
         }}
         .flux-hero-row {{
             display: flex;
@@ -136,7 +184,7 @@ def apply_theme(page_icon_only: bool = False) -> None:
             border-radius: 16px;
             flex-shrink: 0;
             animation: flux-fade-up 0.7s ease-out;
-            box-shadow: 0 6px 18px rgba(37, 99, 235, 0.18);
+            box-shadow: 0 6px 18px var(--shadow);
         }}
         .flux-hero-title {{
             font-size: 2.35rem;
@@ -177,11 +225,11 @@ def apply_theme(page_icon_only: bool = False) -> None:
             font-size: 0.75rem;
             font-weight: 600;
             letter-spacing: 0.02em;
-            border: 1px solid rgba(37, 99, 235, 0.18);
-            background: #FFFFFF;
+            border: 1px solid var(--panel-border);
+            background: var(--panel);
             color: var(--blue);
             margin-right: 0.5rem;
-            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+            box-shadow: 0 1px 3px var(--shadow);
         }}
         .flux-pill-dot {{
             width: 6px; height: 6px; border-radius: 50%;
@@ -192,19 +240,19 @@ def apply_theme(page_icon_only: bool = False) -> None:
         /* ---------------- Module / info cards ---------------- */
         .flux-card {{
             position: relative;
-            background: #FFFFFF;
+            background: var(--panel);
             border: 1px solid var(--panel-border);
             border-radius: 18px;
             padding: 1.6rem 1.6rem 1.5rem 1.6rem;
             height: 100%;
-            transition: transform 0.22s cubic-bezier(.2,.8,.2,1), box-shadow 0.22s, border-color 0.22s;
+            transition: transform 0.22s cubic-bezier(.2,.8,.2,1), box-shadow 0.22s, border-color 0.22s, background 0.2s;
             animation: flux-fade-up 0.6s ease-out both;
-            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+            box-shadow: 0 1px 2px var(--shadow);
         }}
         .flux-card:hover {{
             transform: translateY(-4px);
-            border-color: rgba(37, 99, 235, 0.25);
-            box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+            border-color: var(--blue);
+            box-shadow: 0 12px 28px var(--shadow);
         }}
         .flux-card-icon-chip {{
             width: 44px;
@@ -260,12 +308,12 @@ def apply_theme(page_icon_only: bool = False) -> None:
 
         /* ---------------- Metric / stat cards ---------------- */
         .flux-metric {{
-            background: #FFFFFF;
+            background: var(--panel);
             border: 1px solid var(--panel-border);
             border-radius: 14px;
             padding: 1rem 1.15rem;
             animation: flux-fade-up 0.5s ease-out both;
-            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+            box-shadow: 0 1px 2px var(--shadow);
         }}
         .flux-metric-label {{
             font-size: 0.75rem;
@@ -303,19 +351,42 @@ def apply_theme(page_icon_only: bool = False) -> None:
             border-radius: 12px;
             padding: 0.6rem 1.4rem;
             transition: transform 0.18s ease, box-shadow 0.18s ease;
-            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.20);
+            box-shadow: 0 4px 14px var(--shadow);
         }}
         .stButton > button:hover, .stDownloadButton > button:hover {{
             transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(37, 99, 235, 0.28);
+            box-shadow: 0 8px 20px var(--shadow);
+        }}
+
+        /* ---- page_link styled as a full-width button (module card CTAs) ---- */
+        [data-testid="stPageLink"] {{
+            background: linear-gradient(120deg, var(--blue), var(--violet));
+            border-radius: 12px;
+            padding: 0.55rem 1rem;
+            transition: transform 0.18s ease, box-shadow 0.18s ease;
+            box-shadow: 0 4px 14px var(--shadow);
+            width: 100%;
+            margin-top: 0.6rem;
+        }}
+        [data-testid="stPageLink"]:hover {{
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px var(--shadow);
+        }}
+        [data-testid="stPageLink"] p {{
+            color: #FFFFFF !important;
+            font-weight: 700 !important;
+            font-size: 0.88rem !important;
+        }}
+        [data-testid="stPageLink"] svg {{
+            fill: #FFFFFF !important;
         }}
 
         [data-testid="stMetric"] {{
-            background: #FFFFFF;
+            background: var(--panel);
             border: 1px solid var(--panel-border);
             border-radius: 14px;
             padding: 0.9rem 1.1rem;
-            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+            box-shadow: 0 1px 2px var(--shadow);
         }}
 
         .stTabs [data-baseweb="tab-list"] {{
@@ -329,12 +400,12 @@ def apply_theme(page_icon_only: bool = False) -> None:
             color: var(--text-soft);
         }}
         .stTabs [aria-selected="true"] {{
-            background: rgba(37, 99, 235, 0.08) !important;
+            background: var(--panel) !important;
             color: var(--blue) !important;
         }}
 
         [data-testid="stExpander"] {{
-            background: #FFFFFF;
+            background: var(--panel);
             border: 1px solid var(--panel-border);
             border-radius: 14px;
         }}
@@ -370,12 +441,7 @@ def apply_theme(page_icon_only: bool = False) -> None:
 
 def hero(title: str, subtitle: str, tagline: str = "", pills: list[str] | None = None,
          accent_word: str | None = None) -> None:
-    """Render the light hero header used at the top of every page.
-
-    If accent_word is given and found in `title`, that word is rendered
-    with the gradient accent treatment (matches the reference design's
-    'Engineering' highlight in the headline).
-    """
+    """Render the hero header used at the top of every page (adapts to light/dark)."""
     logo_b64 = _logo_base64()
     logo_html = (
         f'<img src="data:image/png;base64,{logo_b64}" class="flux-hero-logo" />'
@@ -414,16 +480,17 @@ def hero(title: str, subtitle: str, tagline: str = "", pills: list[str] | None =
 
 def module_card(icon: str, title: str, desc: str, tag: str, accent: str = "cyan-blue",
                  delay: float = 0.0, checklist: list[str] | None = None) -> str:
-    """Return the HTML string for one module card (place inside st.markdown).
+    """Return the HTML string for one module card body (place inside st.markdown).
 
-    checklist: optional list of short bullet strings shown with a check
-    mark, matching the reference design's feature lists under each card.
+    Does NOT include a CTA link/button — add that separately with
+    st.page_link() right after, so Streamlit renders it as a real,
+    clickable, theme-aware element instead of raw HTML.
     """
     accents = {
-        "cyan-blue": (COLORS["cyan"], COLORS["blue"]),
-        "blue-violet": (COLORS["blue"], COLORS["violet"]),
-        "violet-flame": (COLORS["violet"], COLORS["flame"]),
-        "amber-flame": (COLORS["amber"], COLORS["flame"]),
+        "cyan-blue": (LIGHT["cyan"], LIGHT["blue"]),
+        "blue-violet": (LIGHT["blue"], LIGHT["violet"]),
+        "violet-flame": (LIGHT["violet"], LIGHT["flame"]),
+        "amber-flame": (LIGHT["amber"], LIGHT["flame"]),
     }
     a, b = accents.get(accent, accents["cyan-blue"])
 
@@ -432,15 +499,15 @@ def module_card(icon: str, title: str, desc: str, tag: str, accent: str = "cyan-
         items = "".join(f"<li>{item}</li>" for item in checklist)
         checklist_html = f'<ul class="flux-card-checklist">{items}</ul>'
 
-    return f"""
-    <div class="flux-card" style="--accent-a:{a}; --accent-b:{b}; animation-delay:{delay}s;">
-        <div class="flux-card-icon-chip">{icon}</div>
-        <div class="flux-card-title">{title}</div>
-        <div class="flux-card-desc">{desc}</div>
-        {checklist_html}
-        <div class="flux-card-tag">{tag}</div>
-    </div>
-    """
+    return (
+        f'<div class="flux-card" style="--accent-a:{a}; --accent-b:{b}; animation-delay:{delay}s;">'
+        f'<div class="flux-card-icon-chip">{icon}</div>'
+        f'<div class="flux-card-title">{title}</div>'
+        f'<div class="flux-card-desc">{desc}</div>'
+        f'{checklist_html}'
+        f'<div class="flux-card-tag">{tag}</div>'
+        f'</div>'
+    )
 
 
 def divider() -> None:

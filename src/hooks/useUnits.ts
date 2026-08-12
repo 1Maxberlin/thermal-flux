@@ -1,5 +1,7 @@
-import { useCallback, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import {
+  QUANTITIES,
+  type QuantityDef,
   getUnitPrefs,
   setUnitPrefs,
   subscribeUnits,
@@ -50,8 +52,6 @@ export function setUnit(q: QuantityId, unitId: string) {
   setUnitPrefs(next);
 }
 
-import { useEffect, useRef, useState } from "react";
-import { QUANTITIES, type QuantityDef } from "@/lib/units";
 
 function defOf(q: QuantityId, unitId: string) {
   const def = QUANTITIES[q] as unknown as QuantityDef;

@@ -180,21 +180,21 @@ function PipeFlowPage() {
         ["Fluid", fluid.name, "-"],
         ["Density", fmt(fluid.density, 4), "kg/m3"],
         ["Dynamic viscosity", fluid.viscosity.toExponential(4), "Pa.s"],
-        ["Internal diameter", diameterMm, "mm"],
-        ["Pipe length", lengthM, "m"],
-        ["Absolute roughness", roughnessMm, "mm"],
-        ["Flow rate", flowLps, "L/s"],
-        ["Velocity", fmt(result.velocity, 4), "m/s"],
+        ["Internal diameter", dia.text, dia.unit],
+        ["Pipe length", len.text, len.unit],
+        ["Absolute roughness", rough.text, rough.unit],
+        ["Flow rate", rate.text, rate.unit],
+        ["Velocity", u.fmt("velocity", result.velocity, 4), u.label("velocity")],
         ["Reynolds number", fmt(result.reynolds, 1), "-"],
         ["Flow regime", result.regime, "-"],
         ["Friction factor (Darcy)", fmt(result.frictionFactor, 5), "-"],
-        ["Pressure drop", fmt(result.pressureDrop, 2), "Pa"],
-        ["Head loss", fmt(result.headLoss, 4), "m"],
+        ["Pressure drop", u.fmt("pressure", result.pressureDrop, 4), u.label("pressure")],
+        ["Head loss", u.fmt("head", result.headLoss, 4), u.label("head")],
       ],
     );
     const sweepCsv = toCsv(
-      ["Flow rate (L/s)", "Pressure drop (kPa)"],
-      sweep.map((s) => [s.q.toFixed(4), s.dp.toFixed(4)]),
+      [`Flow rate (${u.label("flow")})`, `Pressure drop (${u.label("pressure")})`],
+      sweep.map((row) => [u.to("flow", row.q).toFixed(4), u.to("pressure", row.dp).toFixed(4)]),
     );
     downloadFile("pipe_flow_results.csv", `${meta}\n\n${sweepCsv}\n`);
     toast.success("Results exported to pipe_flow_results.csv");
@@ -285,29 +285,34 @@ function PipeFlowPage() {
             </div>
           )}
 
-          <Field label="Internal diameter, D (mm)" hint="Inside diameter of the pipe bore.">
+          <Field label={`Internal diameter, D (${dia.unit})`} hint="Inside diameter of the pipe bore.">
             <input
               type="number"
-              value={diameterMm}
-              onChange={(e) => setDiameterMm(e.target.value)}
+              step="any"
+              value={dia.text}
+              onChange={(e) => dia.setText(e.target.value)}
               className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
             />
           </Field>
 
-          <Field label="Pipe length, L (m)" hint="Straight developed length of the run.">
+          <Field label={`Pipe length, L (${len.unit})`} hint="Straight developed length of the run.">
             <input
               type="number"
-              value={lengthM}
-              onChange={(e) => setLengthM(e.target.value)}
+              step="any"
+              value={len.text}
+              onChange={(e) => len.setText(e.target.value)}
               className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
             />
           </Field>
 
-          <Field label="Absolute roughness, ε (mm)" hint="Pick a material preset or type your own.">
+          <Field label={`Absolute roughness, ε (${rough.unit})`} hint="Pick a material preset or type your own.">
             <div className="space-y-2">
               <select
-                value={ROUGHNESS_PRESETS.some((p) => String(p.value) === roughnessMm) ? roughnessMm : ""}
-                onChange={(e) => e.target.value && setRoughnessMm(e.target.value)}
+                value={roughPreset}
+                onChange={(e) => {
+                  setRoughPreset(e.target.value);
+                  if (e.target.value) rough.setFromSI(Number(e.target.value) / 1000);
+                }}
                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
               >
                 <option value="">Custom value</option>
@@ -320,28 +325,31 @@ function PipeFlowPage() {
               <input
                 type="number"
                 step="any"
-                value={roughnessMm}
-                onChange={(e) => setRoughnessMm(e.target.value)}
+                value={rough.text}
+                onChange={(e) => {
+                  setRoughPreset("");
+                  rough.setText(e.target.value);
+                }}
                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
               />
             </div>
           </Field>
 
-          <Field label="Volumetric flow rate, Q (L/s)" hint="Drag the slider or type an exact value.">
+          <Field label={`Volumetric flow rate, Q (${rate.unit})`} hint="Drag the slider or type an exact value.">
             <input
               type="number"
               step="any"
-              value={flowLps}
-              onChange={(e) => setFlowLps(e.target.value)}
+              value={rate.text}
+              onChange={(e) => rate.setText(e.target.value)}
               className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
             />
             <input
               type="range"
-              min={0.1}
-              max={200}
-              step={0.1}
-              value={Math.min(200, Math.max(0.1, numberOr(flowLps, 20)))}
-              onChange={(e) => setFlowLps(e.target.value)}
+              min={0}
+              max={u.to("flow", 0.2)}
+              step={u.to("flow", 0.2) / 400}
+              value={Math.min(u.to("flow", 0.2), Math.max(0, u.to("flow", rate.si) || 0))}
+              onChange={(e) => rate.setText(e.target.value)}
               className="mt-2 w-full accent-[var(--primary)]"
             />
           </Field>
@@ -400,7 +408,7 @@ function PipeFlowPage() {
           {r ? (
             <>
               <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                <Metric label="Velocity" value={fmt(r.velocity, 3)} unit="m/s" hint="v = Q ÷ A" />
+                <Metric label="Velocity" value={u.fmt("velocity", r.velocity, 3)} unit={u.label("velocity")} hint="v = Q ÷ A" />
                 <Metric
                   label="Reynolds number"
                   value={fmt(r.reynolds, 0)}
@@ -414,9 +422,9 @@ function PipeFlowPage() {
 
                 <Metric
                   label="Pressure drop"
-                  value={fmt(r.pressureDrop / 1000, 3)}
-                  unit="kPa"
-                  hint={`${fmt(r.headLoss, 3)} m head loss`}
+                  value={u.fmt("pressure", r.pressureDrop, 3)}
+                  unit={u.label("pressure")}
+                  hint={`${u.fmt("head", r.headLoss, 3)} ${u.label("head")} head loss`}
                 />
               </div>
 
@@ -425,15 +433,15 @@ function PipeFlowPage() {
                   <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                     <Metric
                       label="Erosional limit (API RP 14E)"
-                      value={fmt(decision.ve, 2)}
-                      unit="m/s"
+                      value={u.fmt("velocity", decision.ve, 2)}
+                      unit={u.label("velocity")}
                       hint={`Operating at ${((r.velocity / decision.ve) * 100).toFixed(0)} % of limit`}
                     />
                     <Metric
                       label="Pressure gradient"
-                      value={fmt((decision.gradient * 100 * 0.3048) / 6894.757, 3)}
-                      unit="psi/100 ft"
-                      hint={`${fmt(decision.gradient / 1000, 4)} kPa/m`}
+                      value={u.fmt("gradient", decision.gradient, 4)}
+                      unit={u.label("gradient")}
+                      hint={`${fmt((decision.gradient * 100 * 0.3048) / 6894.757, 3)} psi/100 ft`}
                     />
                     <Metric
                       label="Friction power"
@@ -465,7 +473,7 @@ function PipeFlowPage() {
                   rate. This run is {r.regime.toLowerCase()}.
                 </FieldNote>
                 <FieldNote title="Why the pressure drop matters">
-                  {`${fmt(r.pressureDrop / 1000, 2)} kPa`} of friction is head your pump or the
+                  {`${u.fmt("pressure", r.pressureDrop, 2)} ${u.label("pressure")}`} of friction is head your pump or the
                   reservoir must supply. Convert it to hydraulic power with{" "}
                   <M tex="P = Q\,\Delta P" /> to size the driver, and compare the head loss against
                   available wellhead pressure to see whether the line can flow naturally or needs
@@ -478,8 +486,8 @@ function PipeFlowPage() {
                 <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
                   <h2 className="font-display text-lg font-bold">Pressure drop vs flow rate</h2>
                   <p className="text-xs text-muted-foreground">
-                    Sweep from 0 to {fmt(numberOr(flowLps, 0) * 2, 1)} L/s · marker shows the
-                    current duty point
+                    Sweep from 0 to {u.fmt("flow", rate.si * 2, 1)} {u.label("flow")} · marker
+                    shows the current duty point
                   </p>
                 </div>
                 <div className="h-[340px] w-full">
@@ -490,9 +498,9 @@ function PipeFlowPage() {
                         dataKey="q"
                         stroke="var(--muted-foreground)"
                         tick={{ fontSize: 11 }}
-                        tickFormatter={(v: number) => v.toFixed(0)}
+                        tickFormatter={(v: number) => u.to("flow", v).toFixed(0)}
                         label={{
-                          value: "Flow rate Q (L/s)",
+                          value: `Flow rate Q (${u.label("flow")})`,
                           position: "insideBottom",
                           offset: -12,
                           fill: "var(--muted-foreground)",
@@ -503,9 +511,9 @@ function PipeFlowPage() {
                         stroke="var(--muted-foreground)"
                         tick={{ fontSize: 11 }}
                         width={70}
-                        tickFormatter={(v: number) => v.toFixed(1)}
+                        tickFormatter={(v: number) => u.to("pressure", v).toFixed(1)}
                         label={{
-                          value: "ΔP (kPa)",
+                          value: `ΔP (${u.label("pressure")})`,
                           angle: -90,
                           position: "insideLeft",
                           fill: "var(--muted-foreground)",
@@ -519,8 +527,8 @@ function PipeFlowPage() {
                           borderRadius: 8,
                           fontSize: 12,
                         }}
-                        formatter={(v: number) => [`${v.toFixed(3)} kPa`, "ΔP"]}
-                        labelFormatter={(v: number) => `Q = ${Number(v).toFixed(2)} L/s`}
+                        formatter={(v: number) => [`${u.fmt("pressure", v, 3)} ${u.label("pressure")}`, "ΔP"]}
+                        labelFormatter={(v: number) => `Q = ${u.fmt("flow", Number(v), 2)} ${u.label("flow")}`}
                       />
                       <Line
                         type="monotone"
@@ -531,8 +539,8 @@ function PipeFlowPage() {
                         isAnimationActive={false}
                       />
                       <ReferenceDot
-                        x={numberOr(flowLps, 0)}
-                        y={r.pressureDrop / 1000}
+                        x={rate.si}
+                        y={r.pressureDrop}
                         r={5}
                         fill="var(--flame)"
                         stroke="var(--background)"
@@ -561,7 +569,7 @@ function PipeFlowPage() {
                           tick={{ fontSize: 11 }}
                           tickFormatter={(v: number) => v.toFixed(0)}
                           label={{
-                            value: "Internal diameter (mm)",
+                            value: `Internal diameter (${u.label("diameter")})`,
                             position: "insideBottom",
                             offset: -12,
                             fill: "var(--muted-foreground)",
@@ -590,13 +598,13 @@ function PipeFlowPage() {
                             borderRadius: 8,
                             fontSize: 12,
                           }}
-                          labelFormatter={(v: number) => `D = ${Number(v).toFixed(1)} mm`}
+                          labelFormatter={(v: number) => `D = ${Number(v).toFixed(2)} ${u.label("diameter")}`}
                         />
                         <Line
                           yAxisId="dp"
                           type="monotone"
                           dataKey="dp"
-                          name="ΔP (kPa)"
+                          name={`ΔP (${u.label("pressure")})`}
                           stroke="var(--primary)"
                           strokeWidth={2.5}
                           dot={false}
@@ -606,7 +614,7 @@ function PipeFlowPage() {
                           yAxisId="v"
                           type="monotone"
                           dataKey="v"
-                          name="Velocity (m/s)"
+                          name={`Velocity (${u.label("velocity")})`}
                           stroke="var(--flame)"
                           strokeWidth={2.5}
                           dot={false}
@@ -614,7 +622,7 @@ function PipeFlowPage() {
                         />
                         <ReferenceLine
                           yAxisId="v"
-                          y={decision.ve}
+                          y={u.to("velocity", decision.ve)}
                           stroke="var(--flame)"
                           strokeDasharray="5 4"
                         />
@@ -624,7 +632,7 @@ function PipeFlowPage() {
                   <p className="mt-3 text-sm text-muted-foreground">
                     Doubling the bore cuts friction roughly 32-fold (<M tex="\Delta P \propto D^{-5}" />
                     ). For this duty a bore near{" "}
-                    <strong className="text-foreground">{decision.recommended.toFixed(0)} mm</strong>{" "}
+                    <strong className="text-foreground">{u.fmt("diameter", decision.recommended, 2)} {u.label("diameter")}</strong>{" "}
                     holds the classic 2 m/s design velocity — compare that against the steel cost
                     before committing.
                   </p>
@@ -640,8 +648,8 @@ function PipeFlowPage() {
                       ["Cross-sectional area, A", `${fmt(r.area * 1e4, 3)} cm²`],
                       ["Relative roughness, ε/D", fmt(r.relativeRoughness, 6)],
                       ["Mass flow rate", `${fmt((fluidResult.fluid?.density ?? 0) * analysis.q, 3)} kg/s`],
-                      ["Head loss, hf", `${fmt(r.headLoss, 4)} m of fluid`],
-                      ["Pressure gradient", `${fmt(r.pressureDrop / numberOr(lengthM, 1) / 1000, 4)} kPa/m`],
+                      ["Head loss, hf", `${u.fmt("head", r.headLoss, 4)} ${u.label("head")} of fluid`],
+                      ["Pressure gradient", `${u.fmt("gradient", r.pressureDrop / Math.max(1e-9, len.si), 4)} ${u.label("gradient")}`],
                       ["Flow regime", r.regime],
                     ].map(([k, v]) => (
                       <tr key={k} className="border-b border-border/60 last:border-0">

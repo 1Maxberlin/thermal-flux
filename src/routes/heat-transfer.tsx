@@ -125,6 +125,7 @@ function TempSlider(props: {
 }
 
 function HeatTransferPage() {
+  const u = useUnits();
   // Conduction inputs
   const [k, setK] = useState("45");
   const [area, setArea] = useState("2.5");

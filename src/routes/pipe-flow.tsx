@@ -24,6 +24,7 @@ import {
 } from "@/lib/advisor";
 
 import { FLUID_LIBRARY, Fluid, Pipe, downloadFile, fmt, toCsv } from "@/lib/engineering";
+import { useUnits, useUnitValue } from "@/hooks/useUnits";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/pipe-flow")({
@@ -62,10 +63,12 @@ function numberOr(value: string, fallback: number) {
 function PipeFlowPage() {
   const [fluidKey, setFluidKey] = useState("water");
   const [custom, setCustom] = useState({ density: "900", viscosity: "0.005", cp: "2000", k: "0.15" });
-  const [diameterMm, setDiameterMm] = useState("100");
-  const [lengthM, setLengthM] = useState("250");
-  const [roughnessMm, setRoughnessMm] = useState("0.045");
-  const [flowLps, setFlowLps] = useState("20");
+  const u = useUnits();
+  const dia = useUnitValue("diameter", 0.1);
+  const len = useUnitValue("length", 250);
+  const rough = useUnitValue("roughness", 0.000045);
+  const rate = useUnitValue("flow", 0.02);
+  const [roughPreset, setRoughPreset] = useState("0.045");
 
   const fluidResult = useMemo(() => {
     try {
@@ -91,25 +94,21 @@ function PipeFlowPage() {
     const fluid = fluidResult.fluid;
     if (!fluid) return { error: fluidResult.error, result: null, pipe: null, q: 0, sweep: [] as { q: number; dp: number }[] };
     try {
-      const pipe = new Pipe(
-        numberOr(diameterMm, NaN) / 1000,
-        numberOr(lengthM, NaN),
-        numberOr(roughnessMm, NaN) / 1000,
-      );
-      const q = numberOr(flowLps, NaN) / 1000;
-      if (!Number.isFinite(q) || q < 0) throw new Error("Flow rate must be zero or positive (L/s).");
+      const pipe = new Pipe(dia.si, len.si, rough.si);
+      const q = rate.si;
+      if (!Number.isFinite(q) || q < 0) throw new Error("Flow rate must be zero or positive.");
       const result = pipe.analyse(fluid, q);
 
       const qMax = Math.max(q * 2, q + 0.001);
       const sweep = Array.from({ length: 60 }, (_, i) => {
         const qi = (qMax * (i + 1)) / 60;
-        return { q: qi * 1000, dp: pipe.analyse(fluid, qi).pressureDrop / 1000 };
+        return { q: qi, dp: pipe.analyse(fluid, qi).pressureDrop };
       });
       return { error: null as string | null, result, pipe, q, sweep };
     } catch (e) {
       return { error: (e as Error).message, result: null, pipe: null, q: 0, sweep: [] };
     }
-  }, [fluidResult, diameterMm, lengthM, roughnessMm, flowLps]);
+  }, [fluidResult, dia.si, len.si, rough.si, rate.si]);
 
   const [energyCost, setEnergyCost] = useState("0.12");
   const [efficiency, setEfficiency] = useState("65");
@@ -131,7 +130,7 @@ function PipeFlowPage() {
     if (!r || !fluid) return null;
     const money = hydraulicEconomics(analysis.q, r.pressureDrop, econ);
     const ve = erosionalVelocity(fluid.density);
-    const gradient = r.pressureDrop / Math.max(1e-9, numberOr(lengthM, 1));
+    const gradient = r.pressureDrop / Math.max(1e-9, len.si);
     const advisories = flowAdvisories({
       velocity: r.velocity,
       reynolds: r.reynolds,
@@ -139,33 +138,33 @@ function PipeFlowPage() {
       pressureDrop: r.pressureDrop,
       gradient,
       density: fluid.density,
-      diameter: numberOr(diameterMm, 0) / 1000,
-      length: numberOr(lengthM, 0),
+      diameter: dia.si,
+      length: len.si,
       flowRate: analysis.q,
       relativeRoughness: r.relativeRoughness,
       gasLike: fluid.density < 50,
     });
-    return { money, ve, gradient, advisories, recommended: diameterForVelocity(analysis.q, 2) * 1000 };
-  }, [analysis, fluidResult, econ, diameterMm, lengthM]);
+    return { money, ve, gradient, advisories, recommended: diameterForVelocity(analysis.q, 2) };
+  }, [analysis, fluidResult, econ, dia.si, len.si]);
 
   /** Bore-size sweep: how ΔP and velocity respond to changing the line size. */
   const sizing = useMemo(() => {
     const fluid = fluidResult.fluid;
     if (!fluid || !analysis.result || analysis.q <= 0) return [];
-    const base = numberOr(diameterMm, 100);
+    const base = dia.si;
     const out: { d: number; dp: number; v: number }[] = [];
     for (let i = 0; i < 40; i++) {
       const d = base * (0.5 + (i * 1.5) / 39);
       try {
-        const pipe = new Pipe(d / 1000, numberOr(lengthM, 1), numberOr(roughnessMm, 0.045) / 1000);
+        const pipe = new Pipe(d, len.si, rough.si);
         const res = pipe.analyse(fluid, analysis.q);
-        out.push({ d, dp: res.pressureDrop / 1000, v: res.velocity });
+        out.push({ d: u.to("diameter", d), dp: u.to("pressure", res.pressureDrop), v: u.to("velocity", res.velocity) });
       } catch {
         /* skip invalid geometry */
       }
     }
     return out;
-  }, [fluidResult, analysis, diameterMm, lengthM, roughnessMm]);
+  }, [fluidResult, analysis, dia.si, len.si, rough.si, u]);
 
 
   const handleExport = () => {

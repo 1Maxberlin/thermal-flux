@@ -9,9 +9,12 @@ import streamlit as st
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 from engineering import conduction_through_wall, newton_cooling, temperature_at  # noqa: E402
+import units as U  # noqa: E402
+from advisors import cooling_advisories  # noqa: E402
 
 st.set_page_config(page_title="Heat Transfer Calculator", page_icon="🔥", layout="wide")
-st.title("Module B · Heat Transfer Calculator")
+st.title("Heat Transfer Calculator")
+U.sidebar_unit_switch()
 
 st.header("1 · Steady-state conduction through a flat wall")
 st.latex(r"q = \frac{k\,A\,(T_{hot}-T_{cold})}{L}")
@@ -38,7 +41,10 @@ with col_in:
 try:
     cond = conduction_through_wall(k, area, thickness, t_hot, t_cold)
     with col_out:
-        st.metric("Heat transfer rate q", f"{cond['heat_rate']:,.1f} W")
+        st.metric(
+            "Heat transfer rate q",
+            f"{U.to_display('power', cond['heat_rate']):,.2f} {U.label('power')}",
+        )
         st.metric("Heat flux q″", f"{cond['heat_flux']:,.1f} W/m²")
         st.metric("Thermal resistance R", f"{cond['resistance']:.6f} K/W")
         st.metric("Driving ΔT", f"{cond['delta_t']:.2f} K")
@@ -75,6 +81,13 @@ try:
         m2.metric("Time to target", "—")
         st.warning(cool["note"])
     m3.metric("Practically settled (5τ)", f"{5*tau/60:.1f} min")
+
+    st.subheader("Cool-down & flow-assurance advisor")
+    risk = st.number_input("Flow-assurance risk temperature (°C)", value=35.0)
+    response_h = st.number_input("Available crew response time (h)", value=4.0, min_value=0.1)
+    for advice in cooling_advisories(tau, cool["time_to_target"], risk, t0, t_inf, response_h * 3600):
+        text = f"**{advice.title}** — {advice.detail}" + (f" _{advice.action}_" if advice.action else "")
+        (st.error if advice.severity == "critical" else st.warning if advice.severity == "review" else st.success)(text)
 
     horizon = max((cool["time_to_target"] or tau * 3) * 1.5, tau * 0.5, 1)
     times = np.linspace(0, horizon, 200)

@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { useState, type ReactNode } from "react";
-import { Activity, Flame, Database, Gauge, BookOpen, Menu, X } from "lucide-react";
+import { Activity, Flame, Database, Gauge, BookOpen, Ruler, Menu, X } from "lucide-react";
 import { Logo, Wordmark } from "@/components/Logo";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
@@ -9,6 +9,7 @@ const NAV = [
   { to: "/pipe-flow", label: "Pipe Flow", icon: Activity },
   { to: "/heat-transfer", label: "Heat Transfer", icon: Flame },
   { to: "/data-dashboard", label: "Rock & Fluid Data", icon: Database },
+  { to: "/units", label: "Units", icon: Ruler },
   { to: "/manual", label: "Manual", icon: BookOpen },
 ] as const;
 
@@ -84,6 +85,9 @@ export function AppShell({ children, bleed = false }: { children: ReactNode; ble
             </span>
           </div>
           <div className="flex flex-wrap items-center gap-4">
+            <Link to="/units" className="transition-colors hover:text-foreground">
+              Units
+            </Link>
             <Link to="/manual" className="transition-colors hover:text-foreground">
               Manual
             </Link>

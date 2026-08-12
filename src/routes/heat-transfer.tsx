@@ -12,6 +12,7 @@ import {
 } from "recharts";
 import { AlertTriangle, Download } from "lucide-react";
 import { AppShell, Field, Metric, PageHeader } from "@/components/AppShell";
+import { useUnits } from "@/hooks/useUnits";
 import { Equation, FieldNote, M } from "@/components/Math";
 import { AdvisorPanel } from "@/components/Advisor";
 import { biotNumber, conductionAdvisories, coolingAdvisories } from "@/lib/advisor";
@@ -96,7 +97,35 @@ function Slider({
   );
 }
 
+/** Temperature slider that presents values in the user's chosen temperature unit. */
+function TempSlider(props: {
+  label: string;
+  hint: string;
+  value: string;
+  onChange: (v: string) => void;
+  min: number;
+  max: number;
+}) {
+  const u = useUnits();
+  const disp = (c: number) => u.to("temperature", c);
+  const lo = disp(props.min);
+  const hi = disp(props.max);
+  return (
+    <Slider
+      label={props.label}
+      hint={props.hint}
+      unit={u.label("temperature")}
+      value={String(Number(disp(num(props.value, props.min)).toFixed(2)))}
+      onChange={(v) => props.onChange(String(u.from("temperature", Number(v))))}
+      min={Math.min(lo, hi)}
+      max={Math.max(lo, hi)}
+      step={1}
+    />
+  );
+}
+
 function HeatTransferPage() {
+  const u = useUnits();
   // Conduction inputs
   const [k, setK] = useState("45");
   const [area, setArea] = useState("2.5");
@@ -294,25 +323,21 @@ function HeatTransferPage() {
               step={0.001}
             />
             <div className="grid grid-cols-2 gap-4">
-              <Slider
+              <TempSlider
                 label="Hot-side temperature"
                 hint="Temperature of the surface in contact with the hot fluid."
-                unit="°C"
                 value={tHot}
                 onChange={setTHot}
                 min={-50}
                 max={800}
-                step={1}
               />
-              <Slider
+              <TempSlider
                 label="Cold-side temperature"
                 hint="Temperature of the outer/cold surface of the wall."
-                unit="°C"
                 value={tCold}
                 onChange={setTCold}
                 min={-100}
                 max={800}
-                step={1}
               />
             </div>
           </div>
@@ -328,11 +353,11 @@ function HeatTransferPage() {
                 <div className="grid gap-4 sm:grid-cols-2">
                   <Metric
                     label="Heat transfer rate, q"
-                    value={fmt(c.heatRate, 1)}
-                    unit="W"
-                    hint={`${fmt(c.heatRate / 1000, 3)} kW`}
+                    value={u.fmt("power", c.heatRate, 2)}
+                    unit={u.label("power")}
+                    hint={`${fmt(c.heatRate, 1)} W`}
                   />
-                  <Metric label="Heat flux, q″" value={fmt(c.heatFlux, 1)} unit="W/m²" />
+                  <Metric label="Heat flux, q″" value={u.fmt("heatFlux", c.heatFlux, 1)} unit={u.label("heatFlux")} />
                   <Metric
                     label="Thermal resistance"
                     value={fmt(c.resistance, 5)}
@@ -448,35 +473,29 @@ function HeatTransferPage() {
 
         <div className="mt-6 grid gap-6 lg:grid-cols-[380px_1fr]">
           <div className="space-y-4">
-            <Slider
+            <TempSlider
               label="Initial temperature, T₀"
               hint="Temperature of the object at the start of cooling (t = 0)."
-              unit="°C"
               value={t0}
               onChange={setT0}
               min={-50}
               max={400}
-              step={1}
             />
-            <Slider
+            <TempSlider
               label="Ambient temperature, T∞"
               hint="Temperature of the surrounding air or water. The object can never cool below this."
-              unit="°C"
               value={tInf}
               onChange={setTInf}
               min={-50}
               max={200}
-              step={1}
             />
-            <Slider
+            <TempSlider
               label="Target temperature"
               hint="The temperature you want to reach — must lie between T₀ and T∞."
-              unit="°C"
               value={tTarget}
               onChange={setTTarget}
               min={-50}
               max={400}
-              step={1}
             />
             <Slider
               label="Convection coefficient, h"
@@ -545,14 +564,14 @@ function HeatTransferPage() {
                 <div className="grid gap-4 sm:grid-cols-3">
                   <Metric
                     label="Thermal time constant"
-                    value={fmt(cool.tau / 60, 2)}
-                    unit="min"
+                    value={u.fmt("time", cool.tau, 2)}
+                    unit={u.label("time")}
                     hint={`${fmt(cool.tau, 0)} s — 63 % of the change`}
                   />
                   <Metric
                     label="Time to target"
-                    value={cool.timeToTarget !== null ? fmt(cool.timeToTarget / 60, 2) : "—"}
-                    unit={cool.timeToTarget !== null ? "min" : undefined}
+                    value={cool.timeToTarget !== null ? u.fmt("time", cool.timeToTarget, 2) : "—"}
+                    unit={cool.timeToTarget !== null ? u.label("time") : undefined}
                     hint={
                       cool.timeToTarget !== null
                         ? `${fmt(cool.timeToTarget, 0)} s`
@@ -561,8 +580,8 @@ function HeatTransferPage() {
                   />
                   <Metric
                     label="Practically settled (5τ)"
-                    value={fmt((5 * cool.tau) / 60, 1)}
-                    unit="min"
+                    value={u.fmt("time", 5 * cool.tau, 1)}
+                    unit={u.label("time")}
                     hint="> 99 % of the temperature change complete"
                   />
                 </div>
@@ -600,9 +619,9 @@ function HeatTransferPage() {
                           tick={{ fontSize: 11 }}
                           width={60}
                           domain={["auto", "auto"]}
-                          tickFormatter={(v: number) => v.toFixed(0)}
+                          tickFormatter={(v: number) => u.to("temperature", v).toFixed(0)}
                           label={{
-                            value: "Temperature (°C)",
+                            value: `Temperature (${u.label("temperature")})`,
                             angle: -90,
                             position: "insideLeft",
                             fill: "var(--muted-foreground)",
@@ -616,7 +635,7 @@ function HeatTransferPage() {
                             borderRadius: 8,
                             fontSize: 12,
                           }}
-                          formatter={(v: number) => [`${v.toFixed(2)} °C`, "T"]}
+                          formatter={(v: number) => [`${u.fmt("temperature", v, 2)} ${u.label("temperature")}`, "T"]}
                           labelFormatter={(v: number) => `t = ${Number(v).toFixed(2)} min`}
                         />
                         <Area
@@ -665,13 +684,13 @@ function HeatTransferPage() {
           <div className="mt-6 space-y-4">
             <div className="grid gap-4 rounded-2xl border border-border/70 bg-background/40 p-4 sm:grid-cols-2 sm:p-5">
               <Field
-                label="Flow-assurance risk temperature (°C)"
+                label={`Flow-assurance risk temperature (${u.label("temperature")})`}
                 hint="Wax appearance or hydrate formation temperature for this fluid"
               >
                 <input
                   type="number"
-                  value={riskTemp}
-                  onChange={(e) => setRiskTemp(e.target.value)}
+                  value={String(Number(u.to("temperature", num(riskTemp, 35)).toFixed(2)))}
+                  onChange={(e) => setRiskTemp(String(u.from("temperature", Number(e.target.value))))}
                   className="w-full rounded-md border border-input bg-background px-3 py-2 text-base outline-none focus:ring-2 focus:ring-ring"
                 />
               </Field>

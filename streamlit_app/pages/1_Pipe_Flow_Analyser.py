@@ -9,9 +9,11 @@ import streamlit as st
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 from engineering import FLUID_LIBRARY, Fluid, Pipe  # noqa: E402
+import units as U  # noqa: E402
+from advisors import flow_advisories, hydraulic_economics  # noqa: E402
 
 st.set_page_config(page_title="Pipe Flow Analyser", page_icon="🔧", layout="wide")
-st.title("Module A · Pipe Flow Analyser")
+st.title("Pipe Flow Analyser")
 st.caption("Darcy–Weisbach pressure drop with the Colebrook–White friction factor")
 
 ROUGHNESS = {
@@ -21,6 +23,8 @@ ROUGHNESS = {
     "Cast iron": 0.26,
     "Concrete (rough)": 3.0,
 }
+
+U.sidebar_unit_switch()
 
 with st.sidebar:
     st.header("Inputs")
@@ -45,10 +49,24 @@ try:
     res = pipe.analyse(fluid, q)
 
     c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Velocity", f"{res['velocity']:.3f} m/s")
+    c1.metric("Velocity", f"{U.to_display('velocity', res['velocity']):.3f} {U.label('velocity')}")
     c2.metric("Reynolds number", f"{res['reynolds']:,.0f}", res["regime"])
     c3.metric("Friction factor", f"{res['friction_factor']:.4f}")
-    c4.metric("Pressure drop", f"{res['pressure_drop']/1000:.3f} kPa", f"{res['head_loss']:.2f} m head")
+    c4.metric(
+        "Pressure drop",
+        f"{U.to_display('pressure', res['pressure_drop']):.3f} {U.label('pressure')}",
+        f"{U.to_display('head', res['head_loss']):.2f} {U.label('head')} head",
+    )
+
+    money = hydraulic_economics(q, res["pressure_drop"])
+    e1, e2 = st.columns(2)
+    e1.metric("Friction power", f"{money['shaft_power']/1000:.2f} kW shaft")
+    e2.metric("Annual pumping cost", f"{money['annual_cost']:,.0f}")
+
+    st.subheader("Decision advisor")
+    for advice in flow_advisories(res, fluid.density, length, gas_like=fluid.density < 50):
+        text = f"**{advice.title}** — {advice.detail}" + (f" _{advice.action}_" if advice.action else "")
+        (st.error if advice.severity == "critical" else st.warning if advice.severity == "review" else st.success)(text)
 
     sweep = pd.DataFrame(
         [

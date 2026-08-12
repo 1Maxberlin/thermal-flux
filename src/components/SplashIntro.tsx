@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import introVideo from "@/assets/logo-intro.mp4.asset.json";
+import markUrl from "@/assets/thermaflux-mark.png";
 
 const HOLD_MS = 3000;
 const FADE_MS = 550;
@@ -58,9 +59,16 @@ export function SplashIntro() {
       style={{ opacity: leaving ? 0 : 1 }}
       role="presentation"
     >
+      {/* Static mark behind the clip so the intro always shows something */}
+      <img
+        src={markUrl}
+        alt=""
+        aria-hidden="true"
+        className="absolute size-40 animate-pulse opacity-80 sm:size-56"
+      />
       <video
         ref={videoRef}
-        className="size-full max-h-screen object-contain"
+        className="relative size-full max-h-screen object-contain"
         src={introVideo.url}
         autoPlay
         muted

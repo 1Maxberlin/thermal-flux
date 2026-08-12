@@ -29,6 +29,8 @@ export interface QuantityDef {
   field: string;
 }
 
+const conv = (id: string, label: string, toBase: (v: number) => number, fromBase: (v: number) => number): UnitDef => ({ id, label, toBase, fromBase });
+
 const linear = (id: string, label: string, factor: number): UnitDef => ({
   id,
   label,
@@ -129,9 +131,9 @@ export const QUANTITIES = {
     si: "°C",
     field: "°F",
     units: [
-      { id: "c", label: "°C", toBase: (v) => v, fromBase: (v) => v },
-      { id: "f", label: "°F", toBase: (v) => (v - 32) / 1.8, fromBase: (v) => v * 1.8 + 32 },
-      { id: "k", label: "K", toBase: (v) => v - 273.15, fromBase: (v) => v + 273.15 },
+      conv("c", "°C", (v) => v, (v) => v),
+      conv("f", "°F", (v) => (v - 32) / 1.8, (v) => v * 1.8 + 32),
+      conv("k", "K", (v) => v - 273.15, (v) => v + 273.15),
     ],
   },
   power: {
@@ -169,7 +171,7 @@ export const QUANTITIES = {
       linear("kgm3", "kg/m³", 1),
       linear("lbft3", "lb/ft³", 16.01846337),
       linear("ppg", "ppg", 119.8264273),
-      { id: "api", label: "°API", toBase: (v) => 141500 / (v + 131.5), fromBase: (v) => 141500 / v - 131.5 },
+      conv("api", "°API", (v) => 141500 / (v + 131.5), (v) => 141500 / v - 131.5),
     ],
   },
   viscosity: {

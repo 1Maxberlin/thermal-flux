@@ -59,16 +59,9 @@ export function SplashIntro() {
       style={{ opacity: leaving ? 0 : 1 }}
       role="presentation"
     >
-      {/* Static mark behind the clip so the intro always shows something */}
-      <img
-        src={markUrl}
-        alt=""
-        aria-hidden="true"
-        className="absolute size-40 animate-pulse opacity-80 sm:size-56"
-      />
       <video
         ref={videoRef}
-        className="relative size-full max-h-screen object-contain"
+        className="absolute inset-0 size-full object-cover"
         src={introVideo.url}
         autoPlay
         muted

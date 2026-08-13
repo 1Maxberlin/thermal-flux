@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import introVideo from "@/assets/logo-intro.mp4.asset.json";
-import markUrl from "@/assets/thermaflux-mark.png";
+
 
 const HOLD_MS = 3000;
 const FADE_MS = 550;
